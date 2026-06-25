@@ -36,7 +36,13 @@ export function ChatWindow({ onLogout }: { onLogout: () => void }) {
 
   const handleInput = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setInput(e.target.value)
-    const ta = e.target
+    e.target.style.height = 'auto'
+    e.target.style.height = Math.min(e.target.scrollHeight, 120) + 'px'
+  }
+
+  const handleInputNative = (e: React.FormEvent<HTMLTextAreaElement>) => {
+    const ta = e.currentTarget
+    setInput(ta.value)
     ta.style.height = 'auto'
     ta.style.height = Math.min(ta.scrollHeight, 120) + 'px'
   }
@@ -135,6 +141,7 @@ export function ChatWindow({ onLogout }: { onLogout: () => void }) {
               ref={textareaRef}
               value={input}
               onChange={handleInput}
+            onInput={handleInputNative}
               onKeyDown={handleKeyDown}
               placeholder="Napisz wiadomość…"
               rows={1}
