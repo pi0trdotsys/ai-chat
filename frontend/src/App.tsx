@@ -7,7 +7,12 @@ export default function App() {
     () => !!localStorage.getItem('token')
   )
 
+  const handleLogout = () => {
+    localStorage.removeItem('token')
+    setIsAuthenticated(false)
+  }
+
   return isAuthenticated
-    ? <ChatWindow />
+    ? <ChatWindow onLogout={handleLogout} />
     : <LoginScreen onLogin={() => setIsAuthenticated(true)} />
 }
