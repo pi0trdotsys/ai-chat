@@ -44,7 +44,7 @@ const requireAuth = (req: express.Request, res: express.Response, next: express.
 }
 
 app.post('/api/chat', requireAuth, async (req, res) => {
-  const { messages, model = 'dolphin-pl' } = req.body as {
+  const { messages, model = 'dolphin-mistral' } = req.body as {
     messages: { role: string; content: string }[]
     model?: string
   }
