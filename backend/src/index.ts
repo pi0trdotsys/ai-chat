@@ -63,7 +63,9 @@ app.post('/api/chat', requireAuth, async (req, res) => {
     }
     res.write('data: [DONE]\n\n')
   } catch (err) {
-    res.write(`data: ${JSON.stringify({ error: 'Błąd modelu' })}\n\n`)
+    const errMsg = err instanceof Error ? err.message : String(err)
+    console.error('Ollama error:', errMsg)
+    res.write(`data: ${JSON.stringify({ error: errMsg })}\n\n`)
   } finally {
     res.end()
   }
