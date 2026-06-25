@@ -25,7 +25,7 @@ export function MessageBubble({ message, isStreaming }: MessageBubbleProps) {
           color: isUser ? 'rgba(255,255,255,0.7)' : 'rgba(167,139,250,0.9)',
         }}
       >
-        {isUser ? 'P' : 'AI'}
+        {isUser ? 'P' : '🐬'}
       </div>
 
       <div

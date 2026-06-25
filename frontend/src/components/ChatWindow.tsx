@@ -8,9 +8,10 @@ export function ChatWindow({ onLogout }: { onLogout: () => void }) {
   const { messages, isStreaming, error, sendMessage, clearMessages } = useChat()
   const [input, setInput] = useState('')
   const [sidebarOpen, setSidebarOpen] = useState(false)
-  const [conversations] = useState<Conversation[]>([
+  const [conversations, setConversations] = useState<Conversation[]>([
     { id: '1', title: 'Nowa rozmowa', date: 'Dziś' },
   ])
+  const [activeId, setActiveId] = useState<string>('1')
   const bottomRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
@@ -59,9 +60,15 @@ export function ChatWindow({ onLogout }: { onLogout: () => void }) {
           isOpen={true}
           onClose={() => {}}
           conversations={conversations}
-          activeId="1"
+          activeId={activeId}
           onSelect={() => {}}
-          onNew={clearMessages}
+          onNew={() => {
+        const id = Math.random().toString(36).slice(2)
+        const newConv = { id, title: 'Nowa rozmowa', date: 'Dziś' }
+        setConversations(prev => [newConv, ...prev])
+        setActiveId(id)
+        clearMessages()
+      }}
           onLogout={onLogout}
         />
       </div>
@@ -71,9 +78,16 @@ export function ChatWindow({ onLogout }: { onLogout: () => void }) {
           isOpen={sidebarOpen}
           onClose={() => setSidebarOpen(false)}
           conversations={conversations}
-          activeId="1"
+          activeId={activeId}
           onSelect={() => {}}
-          onNew={() => { clearMessages(); setSidebarOpen(false) }}
+          onNew={() => {
+        const id = Math.random().toString(36).slice(2)
+        const newConv = { id, title: 'Nowa rozmowa', date: 'Dziś' }
+        setConversations(prev => [newConv, ...prev])
+        setActiveId(id)
+        clearMessages()
+        setSidebarOpen(false)
+      }}
           onLogout={onLogout}
         />
       </div>
