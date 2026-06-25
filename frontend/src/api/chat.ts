@@ -1,0 +1,51 @@
+import type { Message, TokenResponse } from '@/types/chat'
+
+const getToken = () => localStorage.getItem('token')
+
+export async function fetchToken(password: string): Promise<string> {
+  const res = await fetch('/api/token', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ password }),
+  })
+  if (!res.ok) throw new Error('Nieprawidłowe hasło')
+  const data: TokenResponse = await res.json()
+  return data.token
+}
+
+export async function* streamChat(messages: Message[]): AsyncGenerator<string> {
+  const res = await fetch('/api/chat', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${getToken()}`,
+    },
+    body: JSON.stringify({
+      messages: messages.map(({ role, content }) => ({ role, content })),
+    }),
+  })
+
+  if (!res.ok) throw new Error('Błąd zapytania')
+
+  const reader = res.body!.getReader()
+  const decoder = new TextDecoder()
+
+  while (true) {
+    const { done, value } = await reader.read()
+    if (done) break
+
+    const lines = decoder.decode(value).split('\n')
+    for (const line of lines) {
+      if (!line.startsWith('data: ')) continue
+      const data = line.slice(6)
+      if (data === '[DONE]') return
+      try {
+        const parsed = JSON.parse(data) as { content?: string; error?: string }
+        if (parsed.error) throw new Error(parsed.error)
+        if (parsed.content) yield parsed.content
+      } catch {
+        // pomiń niepoprawne linie
+      }
+    }
+  }
+}

@@ -1,0 +1,20 @@
+# Środowisko — NIGDY nie commituj .env
+.env
+*.env.local
+
+# Zależności
+node_modules/
+*/node_modules/
+
+# Build
+dist/
+*/dist/
+build/
+*/build/
+
+# Docker
+.docker/
+
+# System
+.DS_Store
+*.log
