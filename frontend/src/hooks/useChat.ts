@@ -9,14 +9,14 @@ export function useChat() {
 
   const sendMessage = useCallback(async (content: string) => {
     const userMessage: Message = {
-      id: crypto.randomUUID(),
+      id: Math.random().toString(36).slice(2),
       role: 'user',
       content,
       createdAt: Date.now(),
     }
 
     const assistantMessage: Message = {
-      id: crypto.randomUUID(),
+      id: Math.random().toString(36).slice(2),
       role: 'assistant',
       content: '',
       createdAt: Date.now(),
