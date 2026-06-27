@@ -2,8 +2,10 @@ import { useEffect, useRef, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useChat } from '@/hooks/useChat'
 import { useHealth } from '@/hooks/useHealth'
+import { useModels } from '@/hooks/useModels'
 import { MessageBubble } from './MessageBubble'
 import { Sidebar } from './Sidebar'
+import { ModelPicker } from './ModelPicker'
 import {
   loadConversations,
   saveConversations,
@@ -19,19 +21,36 @@ const formatTime = (ms: number) => {
   return `${m}:${s.toString().padStart(2, '0')}`
 }
 
+const formatTokens = (n: number) => (n >= 1000 ? `${(n / 1000).toFixed(1)}k` : `${n}`)
+
+const MODEL_KEY = 'ai-chat-model'
+
 export function ChatWindow({ onLogout }: { onLogout: () => void }) {
   const [boot] = useState(loadConversations)
   const [conversations, setConversations] = useState<Conversation[]>(boot.conversations)
   const [activeId, setActiveId] = useState<string>(boot.activeId)
   const initialMessages = boot.conversations.find(c => c.id === boot.activeId)!.messages
 
-  const { messages, setMessages, isStreaming, error, sendMessage, clearMessages, elapsedMs, estimateMs } = useChat(initialMessages)
+  const [selectedModel, setSelectedModel] = useState(() => localStorage.getItem(MODEL_KEY) || '')
+  const { messages, setMessages, isStreaming, error, sendMessage, clearMessages, elapsedMs, estimateMs, sessionTokens } = useChat(initialMessages, selectedModel || undefined)
   const health = useHealth()
+  const { models, defaultModel } = useModels()
 
   const [input, setInput] = useState('')
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const bottomRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+
+  const handleModelChange = (name: string) => {
+    setSelectedModel(name)
+    localStorage.setItem(MODEL_KEY, name)
+  }
+
+  // Live licznik tokenów odpowiedzi w trakcie generacji (przybliżenie ~4 znaki/token)
+  const last = messages[messages.length - 1]
+  const liveTokens = isStreaming && last?.role === 'assistant' && last.content
+    ? Math.max(1, Math.round(last.content.length / 4))
+    : 0
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -66,6 +85,18 @@ export function ChatWindow({ onLogout }: { onLogout: () => void }) {
     setSidebarOpen(false)
   }
 
+  const handleDelete = (id: string) => {
+    const remaining = conversations.filter(c => c.id !== id)
+    // Jeśli usuwamy ostatnią rozmowę, twórz świeżą pustą
+    const list = remaining.length > 0 ? remaining : [emptyConversation()]
+    setConversations(list)
+    if (id === activeId) {
+      const next = list[0]
+      setActiveId(next.id)
+      setMessages(next.messages)
+    }
+  }
+
   const handleSubmit = async (e?: React.FormEvent) => {
     e?.preventDefault()
     const text = input.trim()
@@ -95,18 +126,6 @@ export function ChatWindow({ onLogout }: { onLogout: () => void }) {
     ta.style.height = Math.min(ta.scrollHeight, 120) + 'px'
   }
 
-  // Status połączenia z kontenerem modelu
-  const statusColor =
-    health.status === 'checking' ? '#9ca3af'
-    : health.ollama === 'down' ? '#ef4444'
-    : !health.modelLoaded ? '#f59e0b'
-    : '#22c55e'
-  const statusText =
-    health.status === 'checking' ? 'Sprawdzanie połączenia…'
-    : health.ollama === 'down' ? 'Brak połączenia z modelem'
-    : !health.modelLoaded ? 'Połączono, model niezaładowany'
-    : 'Połączono'
-
   return (
     <div className="flex h-screen w-screen overflow-hidden" style={{background:'linear-gradient(135deg,#0f0c29,#302b63,#24243e)'}}>
       <div
@@ -122,6 +141,7 @@ export function ChatWindow({ onLogout }: { onLogout: () => void }) {
           activeId={activeId}
           onSelect={handleSelect}
           onNew={handleNew}
+          onDelete={handleDelete}
           onLogout={onLogout}
         />
       </div>
@@ -134,6 +154,7 @@ export function ChatWindow({ onLogout }: { onLogout: () => void }) {
           activeId={activeId}
           onSelect={handleSelect}
           onNew={handleNew}
+          onDelete={handleDelete}
           onLogout={onLogout}
         />
       </div>
@@ -152,22 +173,28 @@ export function ChatWindow({ onLogout }: { onLogout: () => void }) {
             ))}
           </button>
 
-          <div
-            className="flex items-center gap-2 text-xs rounded-full px-3 py-1"
-            style={{background:'rgba(167,139,250,0.1)',border:'0.5px solid rgba(167,139,250,0.2)',color:'rgba(167,139,250,0.85)'}}
-            title={statusText}
-          >
-            <motion.span
-              animate={health.status === 'checking' ? { opacity: [0.4, 1, 0.4] } : { opacity: 1 }}
-              transition={{ duration: 1.2, repeat: health.status === 'checking' ? Infinity : 0 }}
-              style={{display:'inline-block',width:7,height:7,borderRadius:'50%',background:statusColor,boxShadow:`0 0 6px ${statusColor}`}}
-            />
-            <span style={{fontFamily:'ui-monospace,monospace'}}>{health.model}</span>
-          </div>
+          <ModelPicker
+            health={health}
+            models={models}
+            value={selectedModel}
+            defaultModel={defaultModel || health.model}
+            onChange={handleModelChange}
+          />
 
-          <button onClick={clearMessages} className="text-xs" style={{color:'rgba(255,255,255,0.3)'}}>
-            Wyczyść
-          </button>
+          <div className="flex items-center gap-3">
+            {sessionTokens > 0 && (
+              <span
+                className="text-xs"
+                style={{color:'rgba(255,255,255,0.4)',fontFamily:'ui-monospace,monospace'}}
+                title="Tokeny zużyte w tej sesji (wejście + wyjście)"
+              >
+                Σ {formatTokens(sessionTokens)} tok
+              </span>
+            )}
+            <button onClick={clearMessages} className="text-xs" style={{color:'rgba(255,255,255,0.3)'}}>
+              Wyczyść
+            </button>
+          </div>
         </div>
 
         <div className="flex-1 overflow-y-auto px-4 py-5 flex flex-col gap-4">
@@ -242,6 +269,11 @@ export function ChatWindow({ onLogout }: { onLogout: () => void }) {
                 {estimateMs > 0 && (
                   <span style={{color:'rgba(255,255,255,0.4)'}}>
                     · szac. ~{formatTime(estimateMs)}
+                  </span>
+                )}
+                {liveTokens > 0 && (
+                  <span style={{color:'rgba(255,255,255,0.4)'}}>
+                    · ≈ {liveTokens} tok
                   </span>
                 )}
               </div>

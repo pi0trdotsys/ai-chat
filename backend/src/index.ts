@@ -150,6 +150,8 @@ app.post('/api/chat', requireAuth, async (req, res) => {
         const genSec = (chunk.eval_duration ?? 0) / ns
         const tps = genSec > 0 ? Number((genTok / genSec).toFixed(1)) : 0
         const stats: ChatStats = { wallMs, loadMs, promptTok, promptMs, genTok, genSec, tps }
+        // Wyślij statystyki tokenów do klienta (licznik w UI)
+        res.write(`data: ${JSON.stringify({ stats: { promptTok, genTok, tps } })}\n\n`)
         const summary = buildSummary(stats)
         log(
           `✓ done | ${wallMs}ms (load ${loadMs.toFixed(0)}ms) | ` +
@@ -195,6 +197,19 @@ app.get('/api/health', async (_req, res) => {
   } catch (err) {
     log(`✗ Health: Ollama niedostępna: ${err instanceof Error ? err.message : String(err)}`)
     res.status(503).json({ status: 'degraded', ollama: 'down', model: DEFAULT_MODEL, modelLoaded: false })
+  }
+})
+
+app.get('/api/models', requireAuth, async (_req, res) => {
+  try {
+    const { models } = await ollama.list()
+    const names = models
+      .map(m => ({ name: m.name, sizeMB: Math.round((m.size ?? 0) / 1e6) }))
+      .sort((a, b) => a.name.localeCompare(b.name))
+    res.json({ models: names, default: DEFAULT_MODEL })
+  } catch (err) {
+    log(`✗ Models: Ollama niedostępna: ${err instanceof Error ? err.message : String(err)}`)
+    res.status(503).json({ models: [], default: DEFAULT_MODEL })
   }
 })
 

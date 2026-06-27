@@ -53,7 +53,19 @@ export function MessageBubble({ message, isStreaming }: MessageBubbleProps) {
         ) : isUser ? (
           <p className="whitespace-pre-wrap break-words">{message.content}</p>
         ) : (
-          <Markdown content={message.content} />
+          <>
+            <Markdown content={message.content} />
+            {message.stats && (
+              <div
+                className="flex items-center gap-2 mt-2 pt-1.5 flex-wrap"
+                style={{borderTop:'0.5px solid rgba(255,255,255,0.06)',fontSize:10,color:'rgba(255,255,255,0.35)'}}
+              >
+                <span title="Tokeny wejściowe (Twoje pytanie + kontekst)">📥 {message.stats.promptTok}</span>
+                <span title="Tokeny wygenerowane w odpowiedzi">📤 {message.stats.genTok}</span>
+                <span title="Prędkość generacji">⚡ {message.stats.tps} tok/s</span>
+              </div>
+            )}
+          </>
         )}
       </div>
     </motion.div>

@@ -1,4 +1,4 @@
-import type { Message, TokenResponse } from '@/types/chat'
+import type { Message, TokenResponse, ChatEvent, MessageStats } from '@/types/chat'
 
 const getToken = () => localStorage.getItem('token')
 
@@ -13,7 +13,7 @@ export async function fetchToken(password: string): Promise<string> {
   return data.token
 }
 
-export async function* streamChat(messages: Message[]): AsyncGenerator<string> {
+export async function* streamChat(messages: Message[], model?: string): AsyncGenerator<ChatEvent> {
   const res = await fetch('/api/chat', {
     method: 'POST',
     headers: {
@@ -22,6 +22,7 @@ export async function* streamChat(messages: Message[]): AsyncGenerator<string> {
     },
     body: JSON.stringify({
       messages: messages.map(({ role, content }) => ({ role, content })),
+      ...(model ? { model } : {}),
     }),
   })
 
@@ -29,20 +30,25 @@ export async function* streamChat(messages: Message[]): AsyncGenerator<string> {
 
   const reader = res.body!.getReader()
   const decoder = new TextDecoder()
+  let buffer = ''
 
   while (true) {
     const { done, value } = await reader.read()
     if (done) break
 
-    const lines = decoder.decode(value).split('\n')
+    buffer += decoder.decode(value, { stream: true })
+    const lines = buffer.split('\n')
+    buffer = lines.pop() ?? '' // ostatni fragment może być niekompletny
+
     for (const line of lines) {
       if (!line.startsWith('data: ')) continue
       const data = line.slice(6)
       if (data === '[DONE]') return
       try {
-        const parsed = JSON.parse(data) as { content?: string; error?: string }
+        const parsed = JSON.parse(data) as { content?: string; error?: string; stats?: MessageStats }
         if (parsed.error) throw new Error(parsed.error)
-        if (parsed.content) yield parsed.content
+        if (parsed.content) yield { content: parsed.content }
+        if (parsed.stats) yield { stats: parsed.stats }
       } catch {
         // pomiń niepoprawne linie
       }

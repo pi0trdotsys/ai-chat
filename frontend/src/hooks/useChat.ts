@@ -32,12 +32,13 @@ function pushDuration(ms: number): number[] {
   return next
 }
 
-export function useChat(initialMessages: Message[] = []) {
+export function useChat(initialMessages: Message[] = [], model?: string) {
   const [messages, setMessages] = useState<Message[]>(initialMessages)
   const [isStreaming, setIsStreaming] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [elapsedMs, setElapsedMs] = useState(0)
   const [estimateMs, setEstimateMs] = useState(() => median(readDurations()))
+  const [sessionTokens, setSessionTokens] = useState(0)
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   useEffect(() => () => { if (timerRef.current) clearInterval(timerRef.current) }, [])
@@ -68,14 +69,21 @@ export function useChat(initialMessages: Message[] = []) {
     timerRef.current = setInterval(() => setElapsedMs(Date.now() - startedAt), 250)
 
     try {
-      for await (const chunk of streamChat(updatedMessages)) {
-        setMessages(prev =>
-          prev.map(m =>
-            m.id === assistantMessage.id
-              ? { ...m, content: m.content + chunk }
-              : m
+      for await (const event of streamChat(updatedMessages, model)) {
+        if ('content' in event) {
+          setMessages(prev =>
+            prev.map(m =>
+              m.id === assistantMessage.id
+                ? { ...m, content: m.content + event.content }
+                : m
+            )
           )
-        )
+        } else if ('stats' in event) {
+          setMessages(prev =>
+            prev.map(m => (m.id === assistantMessage.id ? { ...m, stats: event.stats } : m))
+          )
+          setSessionTokens(prev => prev + event.stats.promptTok + event.stats.genTok)
+        }
       }
       setEstimateMs(median(pushDuration(Date.now() - startedAt)))
     } catch (err) {
@@ -86,9 +94,9 @@ export function useChat(initialMessages: Message[] = []) {
       timerRef.current = null
       setIsStreaming(false)
     }
-  }, [messages])
+  }, [messages, model])
 
   const clearMessages = useCallback(() => setMessages([]), [])
 
-  return { messages, setMessages, isStreaming, error, sendMessage, clearMessages, elapsedMs, estimateMs }
+  return { messages, setMessages, isStreaming, error, sendMessage, clearMessages, elapsedMs, estimateMs, sessionTokens }
 }
