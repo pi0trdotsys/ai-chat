@@ -14,6 +14,14 @@ interface ModelRule {
 
 const RULES: ModelRule[] = [
   {
+    match: 'huihui_ai/dolphin3-abliterated',
+    meta: {
+      label: 'Dolphin 3 Abliterated (8B)',
+      desc: 'Dolphin 3 z usuniętym na poziomie wag odruchem odmowy (abliteration). Ta sama polszczyzna, jakość i prędkość co Dolphin 3, ale praktycznie nigdy nie odmawia odpowiedzi. Najbardziej uncensored wybór na tym sprzęcie.',
+      tags: ['max uncensored', 'polski', 'uniwersalny'],
+    },
+  },
+  {
     match: 'dolphin3',
     meta: {
       label: 'Dolphin 3 (8B)',
