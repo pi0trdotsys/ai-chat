@@ -14,6 +14,41 @@ const ACCESS_PASSWORD = process.env.ACCESS_PASSWORD!
 
 const log = (msg: string) => console.log(`[${new Date().toISOString()}] ${msg}`)
 
+interface ChatStats {
+  wallMs: number
+  loadMs: number
+  promptTok: number
+  promptMs: number
+  genTok: number
+  genSec: number
+  tps: number
+}
+
+// Czytelne podsumowanie metryk - tłumaczy liczby na język ludzki
+const buildSummary = (s: ChatStats): string => {
+  const sec = (ms: number) => (ms / 1000).toFixed(1)
+  const accountedMs = s.loadMs + s.promptMs + s.genSec * 1000
+  const queueMs = Math.max(0, s.wallMs - accountedMs)
+
+  const speed =
+    s.tps >= 30 ? 'szybko'
+    : s.tps >= 10 ? 'umiarkowanie'
+    : s.tps > 0 ? 'wolno (sprzęt obciążony lub brak GPU)'
+    : 'brak danych'
+
+  const parts = [
+    `pytanie ${s.promptTok} tok, odpowiedź ${s.genTok} tok`,
+    `generacja ${sec(s.genSec * 1000)}s przy ${s.tps} tok/s (${speed})`,
+    `całość ${sec(s.wallMs)}s`,
+  ]
+  // Kolejka/oczekiwanie wykrywana, gdy realny czas znacząco przewyższa czas faktycznej pracy
+  if (queueMs > 2000) {
+    parts.push(`w tym ~${sec(queueMs)}s w kolejce/oczekiwaniu na zasoby`)
+  }
+  parts.push(`model gotowy w ${sec(s.loadMs)}s`)
+  return parts.join(' · ')
+}
+
 const CONVO_LOG = process.env.CONVO_LOG || '/app/logs/conversations.jsonl'
 const logConversation = async (record: object) => {
   try {
@@ -98,19 +133,23 @@ app.post('/api/chat', requireAuth, async (req, res) => {
         const promptMs = (chunk.prompt_eval_duration ?? 0) / 1e6
         const genTok = chunk.eval_count ?? 0
         const genSec = (chunk.eval_duration ?? 0) / ns
-        const tps = genSec > 0 ? (genTok / genSec).toFixed(1) : '–'
+        const tps = genSec > 0 ? Number((genTok / genSec).toFixed(1)) : 0
+        const stats: ChatStats = { wallMs, loadMs, promptTok, promptMs, genTok, genSec, tps }
+        const summary = buildSummary(stats)
         log(
           `✓ done | ${wallMs}ms (load ${loadMs.toFixed(0)}ms) | ` +
           `prompt ${promptTok} tok / ${promptMs.toFixed(0)}ms | ` +
           `odpowiedź ${genTok} tok / ${genSec.toFixed(2)}s | ${tps} tok/s`
         )
+        log(`📊 ${summary}`)
         await logConversation({
           ts: new Date().toISOString(),
           ip: req.ip,
           model,
           question: lastUser,
           answer,
-          stats: { wallMs, loadMs, promptTok, promptMs, genTok, genSec, tps },
+          stats,
+          summary,
         })
       }
     }
