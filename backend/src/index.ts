@@ -9,8 +9,15 @@ const ollama = new Ollama({ host: process.env.OLLAMA_URL || 'http://localhost:11
 const JWT_SECRET = process.env.JWT_SECRET!
 const ACCESS_PASSWORD = process.env.ACCESS_PASSWORD!
 
+const log = (msg: string) => console.log(`[${new Date().toISOString()}] ${msg}`)
+
 app.use(cors({ origin: process.env.FRONTEND_URL || '*' }))
 app.use(express.json())
+
+app.use((req, _res, next) => {
+  log(`${req.method} ${req.path} | ip=${req.ip}`)
+  next()
+})
 
 const limiter = rateLimit({
   windowMs: 60 * 1000,
@@ -56,6 +63,11 @@ app.post('/api/chat', requireAuth, async (req, res) => {
   const systemPrompt = { role: 'system', content: 'Jesteś pomocnym asystentem. Zawsze odpowiadaj po polsku, używając poprawnej polszczyzny.' }
   const messagesWithSystem = [systemPrompt, ...messages]
 
+  const lastUser = [...messages].reverse().find(m => m.role === 'user')?.content ?? ''
+  const preview = lastUser.replace(/\s+/g, ' ').slice(0, 80)
+  log(`▶ chat | model=${model} | wiadomości=${messages.length} | pytanie="${preview}${lastUser.length > 80 ? '…' : ''}"`)
+
+  const started = Date.now()
   try {
     const stream = await ollama.chat({ model, messages: messagesWithSystem, stream: true })
     for await (const chunk of stream) {
@@ -63,11 +75,26 @@ app.post('/api/chat', requireAuth, async (req, res) => {
       if (content) {
         res.write(`data: ${JSON.stringify({ content })}\n\n`)
       }
+      if (chunk.done) {
+        const wallMs = Date.now() - started
+        const ns = 1e9
+        const loadMs = (chunk.load_duration ?? 0) / 1e6
+        const promptTok = chunk.prompt_eval_count ?? 0
+        const promptMs = (chunk.prompt_eval_duration ?? 0) / 1e6
+        const genTok = chunk.eval_count ?? 0
+        const genSec = (chunk.eval_duration ?? 0) / ns
+        const tps = genSec > 0 ? (genTok / genSec).toFixed(1) : '–'
+        log(
+          `✓ done | ${wallMs}ms (load ${loadMs.toFixed(0)}ms) | ` +
+          `prompt ${promptTok} tok / ${promptMs.toFixed(0)}ms | ` +
+          `odpowiedź ${genTok} tok / ${genSec.toFixed(2)}s | ${tps} tok/s`
+        )
+      }
     }
     res.write('data: [DONE]\n\n')
   } catch (err) {
     const errMsg = err instanceof Error ? err.message : String(err)
-    console.error('Ollama error:', errMsg)
+    log(`✗ Ollama error po ${Date.now() - started}ms: ${errMsg}`)
     res.write(`data: ${JSON.stringify({ error: errMsg })}\n\n`)
   } finally {
     res.end()
