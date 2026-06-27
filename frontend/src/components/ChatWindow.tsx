@@ -12,13 +12,20 @@ import {
   type Conversation,
 } from '@/lib/conversations'
 
+const formatTime = (ms: number) => {
+  const total = Math.floor(ms / 1000)
+  const m = Math.floor(total / 60)
+  const s = total % 60
+  return `${m}:${s.toString().padStart(2, '0')}`
+}
+
 export function ChatWindow({ onLogout }: { onLogout: () => void }) {
   const [boot] = useState(loadConversations)
   const [conversations, setConversations] = useState<Conversation[]>(boot.conversations)
   const [activeId, setActiveId] = useState<string>(boot.activeId)
   const initialMessages = boot.conversations.find(c => c.id === boot.activeId)!.messages
 
-  const { messages, setMessages, isStreaming, error, sendMessage, clearMessages } = useChat(initialMessages)
+  const { messages, setMessages, isStreaming, error, sendMessage, clearMessages, elapsedMs, estimateMs } = useChat(initialMessages)
   const health = useHealth()
 
   const [input, setInput] = useState('')
@@ -214,6 +221,35 @@ export function ChatWindow({ onLogout }: { onLogout: () => void }) {
               />
             ))}
           </AnimatePresence>
+
+          {isStreaming && (
+            <motion.div
+              initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}
+              className="flex flex-col items-center gap-1 py-1"
+            >
+              <div
+                className="flex items-center gap-2 text-xs rounded-full px-3.5 py-1.5"
+                style={{background:'rgba(167,139,250,0.1)',border:'0.5px solid rgba(167,139,250,0.22)',color:'rgba(255,255,255,0.75)'}}
+              >
+                <motion.span
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 1.2, repeat: Infinity, ease: 'linear' }}
+                  style={{display:'inline-block',width:11,height:11,borderRadius:'50%',border:'1.5px solid rgba(167,139,250,0.3)',borderTopColor:'rgba(167,139,250,0.95)'}}
+                />
+                <span style={{fontFamily:'ui-monospace,monospace',fontVariantNumeric:'tabular-nums'}}>
+                  {formatTime(elapsedMs)}
+                </span>
+                {estimateMs > 0 && (
+                  <span style={{color:'rgba(255,255,255,0.4)'}}>
+                    · szac. ~{formatTime(estimateMs)}
+                  </span>
+                )}
+              </div>
+              <p style={{fontSize:10,color:'rgba(255,255,255,0.28)'}}>
+                Trudniejsze pytania mogą potrwać dłużej - odpowiedź na pewno przyjdzie.
+              </p>
+            </motion.div>
+          )}
 
           {error && (
             <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-red-400 text-sm text-center">

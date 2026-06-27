@@ -5,6 +5,11 @@ import jwt from 'jsonwebtoken'
 import { Ollama } from 'ollama'
 import { appendFile, mkdir } from 'fs/promises'
 import { dirname } from 'path'
+import { Agent, setGlobalDispatcher } from 'undici'
+
+// Wyłącz timeouty po stronie klienta HTTP (fetch używany przez Ollamę),
+// żeby długie generacje na wolnym CPU nigdy nie były przerywane.
+setGlobalDispatcher(new Agent({ headersTimeout: 0, bodyTimeout: 0 }))
 
 const app = express()
 const ollama = new Ollama({ host: process.env.OLLAMA_URL || 'http://localhost:11434' })
@@ -107,6 +112,7 @@ app.post('/api/chat', requireAuth, async (req, res) => {
   res.setHeader('Content-Type', 'text/event-stream')
   res.setHeader('Cache-Control', 'no-cache')
   res.setHeader('Connection', 'keep-alive')
+  res.setHeader('X-Accel-Buffering', 'no')
 
   const systemPrompt = { role: 'system', content: 'Jesteś pomocnym asystentem. Zawsze odpowiadaj po polsku, używając poprawnej polszczyzny.' }
   const messagesWithSystem = [systemPrompt, ...messages]
@@ -115,6 +121,14 @@ app.post('/api/chat', requireAuth, async (req, res) => {
   const preview = lastUser.replace(/\s+/g, ' ').slice(0, 80)
   log(`▶ chat | model=${model} | wiadomości=${messages.length} | pytanie="${preview}${lastUser.length > 80 ? '…' : ''}"`)
 
+  // Heartbeat: dopóki nie spłynie pierwszy token (np. podczas długiego przetwarzania
+  // promptu), wysyłamy komentarz SSE co 15 s, by żaden proxy nie zerwał połączenia.
+  res.write(': połączono\n\n')
+  let firstTokenSeen = false
+  const heartbeat = setInterval(() => {
+    if (!firstTokenSeen) res.write(': ping\n\n')
+  }, 15000)
+
   const started = Date.now()
   let answer = ''
   try {
@@ -122,6 +136,7 @@ app.post('/api/chat', requireAuth, async (req, res) => {
     for await (const chunk of stream) {
       const content = chunk.message.content
       if (content) {
+        firstTokenSeen = true
         answer += content
         res.write(`data: ${JSON.stringify({ content })}\n\n`)
       }
@@ -167,6 +182,7 @@ app.post('/api/chat', requireAuth, async (req, res) => {
     })
     res.write(`data: ${JSON.stringify({ error: errMsg })}\n\n`)
   } finally {
+    clearInterval(heartbeat)
     res.end()
   }
 })
@@ -182,4 +198,10 @@ app.get('/api/health', async (_req, res) => {
   }
 })
 
-app.listen(3001, () => console.log('Backend działa na porcie 3001'))
+const server = app.listen(3001, () => console.log('Backend działa na porcie 3001'))
+
+// Brak limitów czasu - każde zapytanie musi otrzymać odpowiedź, choćby po kilku minutach
+server.requestTimeout = 0
+server.headersTimeout = 0
+server.timeout = 0
+server.keepAliveTimeout = 0

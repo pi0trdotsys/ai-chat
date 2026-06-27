@@ -1,11 +1,46 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useRef, useEffect } from 'react'
 import { streamChat } from '@/api/chat'
 import type { Message } from '@/types/chat'
+
+const DURATIONS_KEY = 'ai-chat-durations'
+const MAX_SAMPLES = 8
+
+// Mediana czasów poprzednich odpowiedzi - podstawa szacowanego czasu oczekiwania
+function readDurations(): number[] {
+  try {
+    const raw = localStorage.getItem(DURATIONS_KEY)
+    return raw ? (JSON.parse(raw) as number[]) : []
+  } catch {
+    return []
+  }
+}
+
+function median(nums: number[]): number {
+  if (nums.length === 0) return 0
+  const sorted = [...nums].sort((a, b) => a - b)
+  const mid = Math.floor(sorted.length / 2)
+  return sorted.length % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2
+}
+
+function pushDuration(ms: number): number[] {
+  const next = [...readDurations(), ms].slice(-MAX_SAMPLES)
+  try {
+    localStorage.setItem(DURATIONS_KEY, JSON.stringify(next))
+  } catch {
+    // ignorujemy brak dostępu do storage
+  }
+  return next
+}
 
 export function useChat(initialMessages: Message[] = []) {
   const [messages, setMessages] = useState<Message[]>(initialMessages)
   const [isStreaming, setIsStreaming] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [elapsedMs, setElapsedMs] = useState(0)
+  const [estimateMs, setEstimateMs] = useState(() => median(readDurations()))
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
+
+  useEffect(() => () => { if (timerRef.current) clearInterval(timerRef.current) }, [])
 
   const sendMessage = useCallback(async (content: string) => {
     const userMessage: Message = {
@@ -27,6 +62,11 @@ export function useChat(initialMessages: Message[] = []) {
     setIsStreaming(true)
     setError(null)
 
+    const startedAt = Date.now()
+    setElapsedMs(0)
+    setEstimateMs(median(readDurations()))
+    timerRef.current = setInterval(() => setElapsedMs(Date.now() - startedAt), 250)
+
     try {
       for await (const chunk of streamChat(updatedMessages)) {
         setMessages(prev =>
@@ -37,15 +77,18 @@ export function useChat(initialMessages: Message[] = []) {
           )
         )
       }
+      setEstimateMs(median(pushDuration(Date.now() - startedAt)))
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Nieznany błąd')
       setMessages(prev => prev.filter(m => m.id !== assistantMessage.id))
     } finally {
+      if (timerRef.current) clearInterval(timerRef.current)
+      timerRef.current = null
       setIsStreaming(false)
     }
   }, [messages])
 
   const clearMessages = useCallback(() => setMessages([]), [])
 
-  return { messages, setMessages, isStreaming, error, sendMessage, clearMessages }
+  return { messages, setMessages, isStreaming, error, sendMessage, clearMessages, elapsedMs, estimateMs }
 }
