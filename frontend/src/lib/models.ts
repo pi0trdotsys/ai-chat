@@ -26,6 +26,16 @@ const RULES: ModelRule[] = [
     },
   },
   {
+    match: 'huihui_ai/qwen2.5-abliterate',
+    meta: {
+      label: 'Qwen 2.5 Abliterated (14B)',
+      desc: 'Największy i najbystrzejszy tutaj. Najlepsze rozumowanie i wiedza, bez cenzury. Wolniejszy, polski dobry (choć nie najlepszy).',
+      tags: ['bez cenzury', 'najmądrzejszy', 'wolniejszy'],
+      greeting: 'Cześć! Jestem największym i najbystrzejszym modelem tutaj. Rzucaj trudnymi pytaniami - poradzę sobie.',
+      emoji: '🧠',
+    },
+  },
+  {
     match: 'dolphin3',
     meta: {
       label: 'Dolphin 3 (8B)',
