@@ -44,7 +44,7 @@ const requireAuth = (req: express.Request, res: express.Response, next: express.
 }
 
 app.post('/api/chat', requireAuth, async (req, res) => {
-  const { messages, model = 'wizard-vicuna-uncensored' } = req.body as {
+  const { messages, model = 'dolphin3:8b' } = req.body as {
     messages: { role: string; content: string }[]
     model?: string
   }
@@ -53,8 +53,11 @@ app.post('/api/chat', requireAuth, async (req, res) => {
   res.setHeader('Cache-Control', 'no-cache')
   res.setHeader('Connection', 'keep-alive')
 
+  const systemPrompt = { role: 'system', content: 'Jesteś pomocnym asystentem. Zawsze odpowiadaj po polsku, używając poprawnej polszczyzny.' }
+  const messagesWithSystem = [systemPrompt, ...messages]
+
   try {
-    const stream = await ollama.chat({ model, messages, stream: true })
+    const stream = await ollama.chat({ model, messages: messagesWithSystem, stream: true })
     for await (const chunk of stream) {
       const content = chunk.message.content
       if (content) {

@@ -109,7 +109,7 @@ export function ChatWindow({ onLogout }: { onLogout: () => void }) {
             className="text-xs rounded-full px-3 py-1"
             style={{background:'rgba(167,139,250,0.1)',border:'0.5px solid rgba(167,139,250,0.2)',color:'rgba(167,139,250,0.8)'}}
           >
-            dolphin-mistral
+            dolphin3:8b
           </span>
           <button onClick={clearMessages} className="text-xs" style={{color:'rgba(255,255,255,0.3)'}}>
             Wyczyść
