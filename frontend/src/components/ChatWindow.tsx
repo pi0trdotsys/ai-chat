@@ -46,6 +46,12 @@ export function ChatWindow({ onLogout }: { onLogout: () => void }) {
     localStorage.setItem(MODEL_KEY, name)
   }
 
+  const [modelHintSeen, setModelHintSeen] = useState(() => !!localStorage.getItem('ai-chat-model-hint'))
+  const dismissModelHint = () => {
+    setModelHintSeen(true)
+    localStorage.setItem('ai-chat-model-hint', '1')
+  }
+
   // Live licznik tokenów odpowiedzi w trakcie generacji (przybliżenie ~4 znaki/token)
   const last = messages[messages.length - 1]
   const liveTokens = isStreaming && last?.role === 'assistant' && last.content
@@ -179,6 +185,8 @@ export function ChatWindow({ onLogout }: { onLogout: () => void }) {
             value={selectedModel}
             defaultModel={defaultModel || health.model}
             onChange={handleModelChange}
+            hint={!modelHintSeen}
+            onDismissHint={dismissModelHint}
           />
 
           <div className="flex items-center gap-3">

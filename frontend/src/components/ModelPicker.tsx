@@ -9,9 +9,11 @@ interface ModelPickerProps {
   value: string // '' = model domyślny backendu
   defaultModel: string
   onChange: (name: string) => void
+  hint?: boolean
+  onDismissHint?: () => void
 }
 
-export function ModelPicker({ health, models, value, defaultModel, onChange }: ModelPickerProps) {
+export function ModelPicker({ health, models, value, defaultModel, onChange, hint, onDismissHint }: ModelPickerProps) {
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
 
@@ -23,6 +25,11 @@ export function ModelPicker({ health, models, value, defaultModel, onChange }: M
     document.addEventListener('mousedown', onClick)
     return () => document.removeEventListener('mousedown', onClick)
   }, [open])
+
+  const toggle = () => {
+    setOpen(o => !o)
+    onDismissHint?.()
+  }
 
   const current = value || defaultModel
   const currentLabel = describeModel(current).label
@@ -37,8 +44,8 @@ export function ModelPicker({ health, models, value, defaultModel, onChange }: M
     <div ref={ref} style={{position:'relative'}}>
       <button
         type="button"
-        onClick={() => setOpen(o => !o)}
-        className="flex items-center gap-2 text-xs rounded-full px-3 py-1.5 transition-colors"
+        onClick={toggle}
+        className="flex items-center gap-2 text-xs rounded-full pl-3 pr-2.5 py-1.5 transition-colors"
         style={{background:'rgba(167,139,250,0.1)',border:'0.5px solid rgba(167,139,250,0.22)',color:'rgba(255,255,255,0.85)'}}
       >
         <motion.span
@@ -47,6 +54,7 @@ export function ModelPicker({ health, models, value, defaultModel, onChange }: M
           style={{display:'inline-block',width:7,height:7,borderRadius:'50%',background:statusColor,boxShadow:`0 0 6px ${statusColor}`}}
         />
         <span style={{fontWeight:500}}>{currentLabel}</span>
+        <span style={{color:'rgba(255,255,255,0.4)',fontSize:11}}>· zmień</span>
         <motion.svg
           animate={{ rotate: open ? 180 : 0 }} transition={{ duration: 0.2 }}
           width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"
@@ -57,15 +65,36 @@ export function ModelPicker({ health, models, value, defaultModel, onChange }: M
       </button>
 
       <AnimatePresence>
+        {hint && !open && (
+          <motion.div
+            initial={{ opacity: 0, y: -4 }}
+            animate={{ opacity: 1, y: [0, 3, 0] }}
+            exit={{ opacity: 0, y: -4 }}
+            transition={{ opacity: { duration: 0.3 }, y: { duration: 1.6, repeat: Infinity, ease: 'easeInOut' } }}
+            className="absolute z-40 left-0 mt-2 rounded-lg px-2.5 py-1.5 whitespace-nowrap"
+            style={{
+              top: '100%',
+              background:'linear-gradient(135deg,rgba(167,139,250,0.95),rgba(96,165,250,0.95))',
+              boxShadow:'0 6px 20px rgba(120,80,255,0.35)',
+              fontSize:11,fontWeight:500,color:'#fff',
+            }}
+          >
+            ↑ Kliknij, aby wybrać model AI
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
         {open && (
           <motion.div
             initial={{ opacity: 0, y: -8, scale: 0.97 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -8, scale: 0.97 }}
             transition={{ duration: 0.15 }}
-            className="absolute z-40 left-1/2 -translate-x-1/2 mt-2 rounded-2xl overflow-hidden"
+            className="absolute z-40 left-0 mt-2 rounded-2xl overflow-hidden"
             style={{
-              width: 320, maxWidth: '90vw', maxHeight: '70vh', overflowY: 'auto',
+              top: '100%',
+              width: 320, maxWidth: 'min(320px, calc(100vw - 32px))', maxHeight: '70vh', overflowY: 'auto',
               background: 'rgba(30,27,55,0.92)', backdropFilter: 'blur(24px)',
               border: '0.5px solid rgba(167,139,250,0.25)', boxShadow: '0 16px 50px rgba(0,0,0,0.45)',
             }}
