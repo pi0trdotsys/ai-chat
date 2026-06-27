@@ -13,7 +13,7 @@ export async function fetchToken(password: string): Promise<string> {
   return data.token
 }
 
-export async function* streamChat(messages: Message[], model?: string): AsyncGenerator<ChatEvent> {
+export async function* streamChat(messages: Message[], model?: string, signal?: AbortSignal): AsyncGenerator<ChatEvent> {
   const res = await fetch('/api/chat', {
     method: 'POST',
     headers: {
@@ -24,6 +24,7 @@ export async function* streamChat(messages: Message[], model?: string): AsyncGen
       messages: messages.map(({ role, content }) => ({ role, content })),
       ...(model ? { model } : {}),
     }),
+    signal,
   })
 
   if (!res.ok) throw new Error('Błąd zapytania')

@@ -40,8 +40,11 @@ export function useChat(initialMessages: Message[] = [], model?: string) {
   const [estimateMs, setEstimateMs] = useState(() => median(readDurations()))
   const [sessionTokens, setSessionTokens] = useState(0)
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const abortRef = useRef<AbortController | null>(null)
 
   useEffect(() => () => { if (timerRef.current) clearInterval(timerRef.current) }, [])
+
+  const stop = useCallback(() => abortRef.current?.abort(), [])
 
   const sendMessage = useCallback(async (content: string) => {
     const userMessage: Message = {
@@ -68,8 +71,11 @@ export function useChat(initialMessages: Message[] = [], model?: string) {
     setEstimateMs(median(readDurations()))
     timerRef.current = setInterval(() => setElapsedMs(Date.now() - startedAt), 250)
 
+    const controller = new AbortController()
+    abortRef.current = controller
+
     try {
-      for await (const event of streamChat(updatedMessages, model)) {
+      for await (const event of streamChat(updatedMessages, model, controller.signal)) {
         if ('content' in event) {
           setMessages(prev =>
             prev.map(m =>
@@ -87,16 +93,22 @@ export function useChat(initialMessages: Message[] = [], model?: string) {
       }
       setEstimateMs(median(pushDuration(Date.now() - startedAt)))
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Nieznany błąd')
-      setMessages(prev => prev.filter(m => m.id !== assistantMessage.id))
+      // Przerwanie przez użytkownika - zachowaj to, co już zostało napisane, bez błędu
+      if (err instanceof DOMException && err.name === 'AbortError') {
+        setMessages(prev => prev.filter(m => m.id !== assistantMessage.id || m.content !== ''))
+      } else {
+        setError(err instanceof Error ? err.message : 'Nieznany błąd')
+        setMessages(prev => prev.filter(m => m.id !== assistantMessage.id))
+      }
     } finally {
       if (timerRef.current) clearInterval(timerRef.current)
       timerRef.current = null
+      abortRef.current = null
       setIsStreaming(false)
     }
   }, [messages, model])
 
   const clearMessages = useCallback(() => setMessages([]), [])
 
-  return { messages, setMessages, isStreaming, error, sendMessage, clearMessages, elapsedMs, estimateMs, sessionTokens }
+  return { messages, setMessages, isStreaming, error, sendMessage, stop, clearMessages, elapsedMs, estimateMs, sessionTokens }
 }

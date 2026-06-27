@@ -33,14 +33,27 @@ export function ChatWindow({ onLogout }: { onLogout: () => void }) {
   const initialMessages = boot.conversations.find(c => c.id === boot.activeId)!.messages
 
   const [selectedModel, setSelectedModel] = useState(() => localStorage.getItem(MODEL_KEY) || '')
-  const { messages, setMessages, isStreaming, error, sendMessage, clearMessages, elapsedMs, estimateMs, sessionTokens } = useChat(initialMessages, selectedModel || undefined)
+  const { messages, setMessages, isStreaming, error, sendMessage, stop, clearMessages, elapsedMs, estimateMs, sessionTokens } = useChat(initialMessages, selectedModel || undefined)
   const health = useHealth()
   const { models, defaultModel } = useModels()
 
   const [input, setInput] = useState('')
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [atBottom, setAtBottom] = useState(true)
   const bottomRef = useRef<HTMLDivElement>(null)
+  const scrollRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+
+  const isNearBottom = () => {
+    const el = scrollRef.current
+    if (!el) return true
+    return el.scrollHeight - el.scrollTop - el.clientHeight < 120
+  }
+
+  const scrollToBottom = (behavior: ScrollBehavior = 'smooth') => {
+    bottomRef.current?.scrollIntoView({ behavior })
+    setAtBottom(true)
+  }
 
   const [greeting, setGreeting] = useState<{ emoji: string; text: string } | null>(null)
   const greetTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -68,8 +81,16 @@ export function ChatWindow({ onLogout }: { onLogout: () => void }) {
     : 0
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
+    // Przewijaj automatycznie tylko, gdy użytkownik jest przy dole - nie wyrywaj go z czytania
+    if (isNearBottom()) bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
+
+  // Esc zatrzymuje generowanie
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape' && isStreaming) stop() }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [isStreaming, stop])
 
   // Zapisz bieżące wiadomości do aktywnej rozmowy + wygeneruj tytuł
   useEffect(() => {
@@ -215,7 +236,11 @@ export function ChatWindow({ onLogout }: { onLogout: () => void }) {
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto px-4 py-5 flex flex-col gap-4">
+        <div
+          ref={scrollRef}
+          onScroll={() => setAtBottom(isNearBottom())}
+          className="flex-1 overflow-y-auto px-4 py-5 flex flex-col gap-4 relative"
+        >
           <AnimatePresence initial={false}>
             {messages.length === 0 && (
               <motion.div
@@ -262,7 +287,7 @@ export function ChatWindow({ onLogout }: { onLogout: () => void }) {
               <MessageBubble
                 key={msg.id}
                 message={msg}
-                isStreaming={isStreaming && i === messages.length - 1 && msg.role === 'assistant' && msg.content === ''}
+                isStreaming={isStreaming && i === messages.length - 1 && msg.role === 'assistant'}
               />
             ))}
           </AnimatePresence>
@@ -360,6 +385,32 @@ export function ChatWindow({ onLogout }: { onLogout: () => void }) {
           <div ref={bottomRef} />
         </div>
 
+        <AnimatePresence>
+          {!atBottom && (
+            <motion.button
+              type="button"
+              onClick={() => scrollToBottom()}
+              initial={{ opacity: 0, y: 8, scale: 0.9 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 8, scale: 0.9 }}
+              whileHover={{ scale: 1.08 }}
+              whileTap={{ scale: 0.95 }}
+              aria-label="Przewiń na dół"
+              className="absolute left-1/2 -translate-x-1/2 z-20 flex items-center justify-center rounded-full"
+              style={{
+                bottom: 88, width: 36, height: 36,
+                background:'rgba(40,36,70,0.85)', backdropFilter:'blur(12px)',
+                border:'0.5px solid rgba(167,139,250,0.35)', boxShadow:'0 6px 20px rgba(0,0,0,0.4)',
+                color:'rgba(255,255,255,0.85)',
+              }}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="6 9 12 15 18 9" />
+              </svg>
+            </motion.button>
+          )}
+        </AnimatePresence>
+
         <div
           className="px-3 pb-4 pt-2 flex-shrink-0"
           style={{borderTop:'0.5px solid rgba(255,255,255,0.06)',background:'rgba(255,255,255,0.02)'}}
@@ -380,19 +431,35 @@ export function ChatWindow({ onLogout }: { onLogout: () => void }) {
               className="flex-1 bg-transparent border-none outline-none text-sm resize-none"
               style={{color:'rgba(255,255,255,0.9)',lineHeight:'1.5',maxHeight:120,fontFamily:'inherit'}}
             />
-            <button
-              onClick={() => handleSubmit()}
-              disabled={!input.trim() || isStreaming}
-              className="flex-shrink-0 flex items-center justify-center rounded-xl transition-opacity disabled:opacity-40"
-              style={{width:34,height:34,background:'linear-gradient(135deg,#a78bfa,#60a5fa)',border:'none'}}
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/>
-              </svg>
-            </button>
+            {isStreaming ? (
+              <motion.button
+                onClick={stop}
+                aria-label="Zatrzymaj generowanie"
+                title="Zatrzymaj (Esc)"
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                whileHover={{ scale: 1.08 }}
+                whileTap={{ scale: 0.92 }}
+                className="flex-shrink-0 flex items-center justify-center rounded-xl"
+                style={{width:34,height:34,background:'linear-gradient(135deg,#f87171,#ef4444)',border:'none'}}
+              >
+                <span style={{display:'block',width:11,height:11,borderRadius:3,background:'#fff'}} />
+              </motion.button>
+            ) : (
+              <button
+                onClick={() => handleSubmit()}
+                disabled={!input.trim()}
+                className="flex-shrink-0 flex items-center justify-center rounded-xl transition-opacity disabled:opacity-40"
+                style={{width:34,height:34,background:'linear-gradient(135deg,#a78bfa,#60a5fa)',border:'none'}}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/>
+                </svg>
+              </button>
+            )}
           </div>
           <p className="text-center mt-1.5" style={{fontSize:10,color:'rgba(255,255,255,0.18)'}}>
-            Enter = wyślij · Shift+Enter = nowa linia
+            {isStreaming ? 'Esc = zatrzymaj generowanie' : 'Enter = wyślij · Shift+Enter = nowa linia'}
           </p>
         </div>
       </div>

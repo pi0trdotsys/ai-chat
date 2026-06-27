@@ -39,7 +39,7 @@ export function MessageBubble({ message, isStreaming }: MessageBubbleProps) {
           backdropFilter: 'blur(10px)',
         }}
       >
-        {isStreaming ? (
+        {isStreaming && !message.content ? (
           <span className="flex gap-1 items-center py-0.5">
             {[0, 1, 2].map(i => (
               <motion.span
@@ -51,6 +51,10 @@ export function MessageBubble({ message, isStreaming }: MessageBubbleProps) {
             ))}
           </span>
         ) : isUser ? (
+          <p className="whitespace-pre-wrap break-words">{message.content}</p>
+        ) : isStreaming ? (
+          // Podczas generacji render zwykłego tekstu (Markdown re-parsowany co token byłby kosztowny);
+          // pełne formatowanie pojawia się po zakończeniu odpowiedzi.
           <p className="whitespace-pre-wrap break-words">{message.content}</p>
         ) : (
           <>
