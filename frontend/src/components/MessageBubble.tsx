@@ -143,6 +143,21 @@ export function MessageBubble({ message, isStreaming, isLast, onRegenerate, onEd
                   <span title="Jak szybko pisał - fragmentów na sekundę.">
                     ⚡ {message.stats.tps.toString().replace('.', ',')}/s
                   </span>
+                  {message.stats.responseTimeMs != null && (
+                    <span title="Ile trwało wygenerowanie tej odpowiedzi.">
+                      ⏱ {(message.stats.responseTimeMs / 1000).toFixed(0)}s
+                    </span>
+                  )}
+                  {message.stats.energyKWh != null && (
+                    <span title="Orientacyjne zużycie energii na tę odpowiedź (cały mini-PC).">
+                      🔋 {(message.stats.energyKWh * 1000).toFixed(2)} Wh
+                    </span>
+                  )}
+                  {message.stats.waterL != null && (
+                    <span title="Orientacyjny ślad wodny energii zużytej na tę odpowiedź.">
+                      💧 {(message.stats.waterL * 1000).toFixed(1)} ml
+                    </span>
+                  )}
                 </div>
               )}
             </>

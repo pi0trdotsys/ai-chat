@@ -188,8 +188,9 @@ app.post('/api/chat', requireAuth, async (req, res) => {
         const genSec = (chunk.eval_duration ?? 0) / ns
         const tps = genSec > 0 ? Number((genTok / genSec).toFixed(1)) : 0
         const stats: ChatStats = { wallMs, loadMs, promptTok, promptMs, genTok, genSec, tps }
-        // Wyślij statystyki tokenów do klienta (licznik w UI)
-        res.write(`data: ${JSON.stringify({ stats: { promptTok, genTok, tps } })}\n\n`)
+        const { energyKWh, waterL } = computeFootprint(wallMs)
+        // Wyślij statystyki do klienta (licznik tokenów + zużycie zasobów w UI)
+        res.write(`data: ${JSON.stringify({ stats: { promptTok, genTok, tps, responseTimeMs: wallMs, energyKWh, waterL } })}\n\n`)
         const summary = buildSummary(stats)
         log(
           `✓ done | ${wallMs}ms (load ${loadMs.toFixed(0)}ms) | ` +
@@ -197,7 +198,6 @@ app.post('/api/chat', requireAuth, async (req, res) => {
           `odpowiedź ${genTok} tok / ${genSec.toFixed(2)}s | ${tps} tok/s`
         )
         log(`📊 ${summary}`)
-        const { energyKWh, waterL } = computeFootprint(wallMs)
         await logConversation({
           ts: new Date().toISOString(),
           ip: req.ip,

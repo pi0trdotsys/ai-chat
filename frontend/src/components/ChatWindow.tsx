@@ -7,6 +7,8 @@ import { MessageBubble } from './MessageBubble'
 import { Sidebar } from './Sidebar'
 import { ModelPicker } from './ModelPicker'
 import { PersonaPanel } from './PersonaPanel'
+import { CommandPalette } from './CommandPalette'
+import { useCompletionNotify } from '@/hooks/useCompletionNotify'
 import { describeModel } from '@/lib/models'
 import {
   loadConversations,
@@ -27,6 +29,13 @@ const formatTokens = (n: number) => (n >= 1000 ? `${(n / 1000).toFixed(1)}k` : `
 
 const MODEL_KEY = 'ai-chat-model'
 
+const EXAMPLE_PROMPTS = [
+  { icon: '💡', text: 'Wyjaśnij mi prosto, jak działa sztuczna inteligencja' },
+  { icon: '✍️', text: 'Napisz krótkie opowiadanie sci-fi po polsku' },
+  { icon: '🍳', text: 'Zaproponuj szybki obiad z makaronu i warzyw' },
+  { icon: '🧠', text: 'Podaj 5 ciekawostek, które mnie zaskoczą' },
+]
+
 export function ChatWindow({ onLogout }: { onLogout: () => void }) {
   const [boot] = useState(loadConversations)
   const [conversations, setConversations] = useState<Conversation[]>(boot.conversations)
@@ -35,14 +44,25 @@ export function ChatWindow({ onLogout }: { onLogout: () => void }) {
 
   const [selectedModel, setSelectedModel] = useState(() => localStorage.getItem(MODEL_KEY) || '')
   const activeConv = conversations.find(c => c.id === activeId)
-  const { messages, setMessages, isStreaming, error, sendMessage, regenerate, editMessage, stop, clearMessages, elapsedMs, estimateMs, sessionTokens } =
+  const { messages, setMessages, isStreaming, error, sendMessage, regenerate, editMessage, stop, clearMessages, elapsedMs, estimateMs, sessionTokens, sessionEnergyKWh, sessionWaterL } =
     useChat(initialMessages, selectedModel || undefined, activeConv?.systemPrompt)
   const health = useHealth()
   const { models, defaultModel } = useModels()
+  useCompletionNotify(isStreaming)
 
   const [input, setInput] = useState('')
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(() => localStorage.getItem('ai-chat-sidebar-collapsed') === '1')
+  const [paletteOpen, setPaletteOpen] = useState(false)
   const [atBottom, setAtBottom] = useState(true)
+
+  const toggleSidebar = () => {
+    setSidebarCollapsed(prev => {
+      const next = !prev
+      localStorage.setItem('ai-chat-sidebar-collapsed', next ? '1' : '0')
+      return next
+    })
+  }
   const bottomRef = useRef<HTMLDivElement>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
@@ -88,9 +108,16 @@ export function ChatWindow({ onLogout }: { onLogout: () => void }) {
     if (isNearBottom()) bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
-  // Esc zatrzymuje generowanie
+  // Skróty klawiszowe: Esc zatrzymuje generowanie, Cmd/Ctrl+K otwiera paletę poleceń
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape' && isStreaming) stop() }
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault()
+        setPaletteOpen(o => !o)
+      } else if (e.key === 'Escape' && isStreaming) {
+        stop()
+      }
+    }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
   }, [isStreaming, stop])
@@ -156,14 +183,29 @@ export function ChatWindow({ onLogout }: { onLogout: () => void }) {
     }
   }
 
+  const requestNotifyOnce = () => {
+    // Poproś o zgodę na powiadomienia przy pierwszej wiadomości (gest użytkownika)
+    if ('Notification' in window && Notification.permission === 'default') {
+      try { Notification.requestPermission() } catch { /* ignorujemy */ }
+    }
+  }
+
   const handleSubmit = async (e?: React.FormEvent) => {
     e?.preventDefault()
     const text = input.trim()
     if (!text || isStreaming) return
     setInput('')
     setGreeting(null)
+    requestNotifyOnce()
     if (textareaRef.current) textareaRef.current.style.height = 'auto'
     await sendMessage(text)
+  }
+
+  const handleExample = (text: string) => {
+    if (isStreaming) return
+    setGreeting(null)
+    requestNotifyOnce()
+    sendMessage(text)
   }
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -193,7 +235,13 @@ export function ChatWindow({ onLogout }: { onLogout: () => void }) {
         style={{background:'radial-gradient(ellipse at 20% 50%,rgba(120,80,255,0.12) 0%,transparent 60%),radial-gradient(ellipse at 80% 20%,rgba(0,180,255,0.08) 0%,transparent 50%)'}}
       />
 
-      <div className="hidden md:flex h-full" style={{width:220,flexShrink:0}}>
+      <motion.div
+        className="hidden md:flex h-full overflow-hidden"
+        initial={false}
+        animate={{ width: sidebarCollapsed ? 0 : 220 }}
+        transition={{ type: 'spring', stiffness: 300, damping: 32 }}
+        style={{ flexShrink: 0 }}
+      >
         <Sidebar
           isOpen={true}
           onClose={() => {}}
@@ -205,7 +253,7 @@ export function ChatWindow({ onLogout }: { onLogout: () => void }) {
           onRename={handleRename}
           onLogout={onLogout}
         />
-      </div>
+      </motion.div>
 
       <div className="md:hidden">
         <Sidebar
@@ -226,14 +274,38 @@ export function ChatWindow({ onLogout }: { onLogout: () => void }) {
           className="flex items-center justify-between px-4 py-3 flex-shrink-0"
           style={{borderBottom:'0.5px solid rgba(255,255,255,0.06)',background:'rgba(255,255,255,0.02)'}}
         >
-          <button
-            onClick={() => setSidebarOpen(true)}
-            className="md:hidden flex flex-col gap-1 p-1"
-          >
-            {[0,1,2].map(i => (
-              <span key={i} style={{display:'block',width:18,height:1.5,borderRadius:2,background:'rgba(255,255,255,0.6)'}} />
-            ))}
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setSidebarOpen(true)}
+              className="md:hidden flex flex-col gap-1 p-1"
+              aria-label="Menu"
+            >
+              {[0,1,2].map(i => (
+                <span key={i} style={{display:'block',width:18,height:1.5,borderRadius:2,background:'rgba(255,255,255,0.6)'}} />
+              ))}
+            </button>
+            <button
+              onClick={toggleSidebar}
+              className="hidden md:flex items-center justify-center rounded-lg"
+              style={{width:30,height:30,color:'rgba(255,255,255,0.5)',border:'0.5px solid rgba(255,255,255,0.1)'}}
+              title={sidebarCollapsed ? 'Pokaż panel' : 'Ukryj panel'}
+              aria-label="Przełącz panel boczny"
+            >
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="4" width="18" height="16" rx="2" />
+                <line x1="9" y1="4" x2="9" y2="20" />
+              </svg>
+            </button>
+            <button
+              onClick={() => setPaletteOpen(true)}
+              className="hidden md:flex items-center gap-1.5 rounded-lg px-2 h-[30px]"
+              style={{color:'rgba(255,255,255,0.45)',border:'0.5px solid rgba(255,255,255,0.1)',fontSize:11}}
+              title="Paleta poleceń (Cmd/Ctrl+K)"
+            >
+              <span>🔍</span>
+              <kbd style={{fontSize:10,opacity:0.7}}>⌘K</kbd>
+            </button>
+          </div>
 
           <ModelPicker
             health={health}
@@ -248,11 +320,11 @@ export function ChatWindow({ onLogout }: { onLogout: () => void }) {
           <div className="flex items-center gap-3">
             {sessionTokens > 0 && (
               <span
-                className="text-xs"
+                className="hidden sm:inline text-xs"
                 style={{color:'rgba(255,255,255,0.4)',fontFamily:'ui-monospace,monospace'}}
-                title="Łącznie fragmentów tekstu przetworzonych w tej sesji (Twoje pytania + odpowiedzi modelu). Im więcej, tym więcej pracy wykonał model."
+                title={`Zużycie w tej sesji - ${formatTokens(sessionTokens)} fragmentów tekstu, ${(sessionEnergyKWh * 1000).toFixed(1)} Wh energii, ${(sessionWaterL * 1000).toFixed(0)} ml wody (orientacyjnie).`}
               >
-                {formatTokens(sessionTokens)} fragm.
+                {formatTokens(sessionTokens)} fragm. · 🔋 {(sessionEnergyKWh * 1000).toFixed(1)} Wh · 💧 {(sessionWaterL * 1000).toFixed(0)} ml
               </span>
             )}
             <button
@@ -275,6 +347,22 @@ export function ChatWindow({ onLogout }: { onLogout: () => void }) {
               value={activeConv?.systemPrompt ?? ''}
               onSave={(text) => { handlePersonaChange(text); setShowPersona(false) }}
               onClose={() => setShowPersona(false)}
+            />
+          )}
+        </AnimatePresence>
+
+        <AnimatePresence>
+          {paletteOpen && (
+            <CommandPalette
+              onClose={() => setPaletteOpen(false)}
+              conversations={conversations}
+              models={models}
+              selectedModel={selectedModel}
+              defaultModel={defaultModel || health.model}
+              onNewChat={handleNew}
+              onSelectConversation={handleSelect}
+              onSelectModel={handleModelChange}
+              onOpenPersona={() => setShowPersona(true)}
             />
           )}
         </AnimatePresence>
@@ -323,6 +411,30 @@ export function ChatWindow({ onLogout }: { onLogout: () => void }) {
                     moich możliwości odpowiem na każde pytanie i rozwieję każdą wątpliwość, niezależnie od tematu
                     rozmowy. Pytaj śmiało i bez ograniczeń.
                   </p>
+
+                  <div className="flex flex-col gap-2 mt-6">
+                    {EXAMPLE_PROMPTS.map((p, idx) => (
+                      <motion.button
+                        key={p.text}
+                        onClick={() => handleExample(p.text)}
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.15 + idx * 0.07 }}
+                        whileHover={{ scale: 1.02, backgroundColor: 'rgba(167,139,250,0.14)' }}
+                        whileTap={{ scale: 0.98 }}
+                        className="flex items-center gap-2.5 text-left text-sm rounded-xl px-3.5 py-2.5"
+                        style={{
+                          background:'rgba(255,255,255,0.05)',
+                          border:'0.5px solid rgba(255,255,255,0.1)',
+                          color:'rgba(255,255,255,0.8)',
+                        }}
+                      >
+                        <span style={{fontSize:16}}>{p.icon}</span>
+                        <span className="flex-1">{p.text}</span>
+                        <span style={{color:'rgba(167,139,250,0.6)',fontSize:13}}>→</span>
+                      </motion.button>
+                    ))}
+                  </div>
                 </div>
               </motion.div>
             )}

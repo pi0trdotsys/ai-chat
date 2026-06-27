@@ -2,6 +2,9 @@ export interface MessageStats {
   promptTok: number
   genTok: number
   tps: number
+  responseTimeMs?: number
+  energyKWh?: number
+  waterL?: number
 }
 
 export interface Message {

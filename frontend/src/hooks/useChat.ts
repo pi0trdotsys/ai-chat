@@ -41,6 +41,8 @@ export function useChat(initialMessages: Message[] = [], model?: string, systemP
   const [elapsedMs, setElapsedMs] = useState(0)
   const [estimateMs, setEstimateMs] = useState(() => median(readDurations()))
   const [sessionTokens, setSessionTokens] = useState(0)
+  const [sessionEnergyKWh, setSessionEnergyKWh] = useState(0)
+  const [sessionWaterL, setSessionWaterL] = useState(0)
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const abortRef = useRef<AbortController | null>(null)
 
@@ -72,6 +74,8 @@ export function useChat(initialMessages: Message[] = [], model?: string, systemP
         } else if ('stats' in event) {
           setMessages(prev => prev.map(m => (m.id === assistantMessage.id ? { ...m, stats: event.stats } : m)))
           setSessionTokens(prev => prev + event.stats.promptTok + event.stats.genTok)
+          setSessionEnergyKWh(prev => prev + (event.stats.energyKWh ?? 0))
+          setSessionWaterL(prev => prev + (event.stats.waterL ?? 0))
         }
       }
       setEstimateMs(median(pushDuration(Date.now() - startedAt)))
@@ -119,6 +123,6 @@ export function useChat(initialMessages: Message[] = [], model?: string, systemP
   return {
     messages, setMessages, isStreaming, error,
     sendMessage, regenerate, editMessage, stop, clearMessages,
-    elapsedMs, estimateMs, sessionTokens,
+    elapsedMs, estimateMs, sessionTokens, sessionEnergyKWh, sessionWaterL,
   }
 }
