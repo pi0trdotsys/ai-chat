@@ -1,1 +1,0 @@
-{"root":["./src/app.tsx","./src/main.tsx","./src/api/chat.ts","./src/components/chatwindow.tsx","./src/components/loginscreen.tsx","./src/components/markdown.tsx","./src/components/messagebubble.tsx","./src/components/sidebar.tsx","./src/hooks/usechat.ts","./src/hooks/usehealth.ts","./src/lib/conversations.ts","./src/types/chat.ts"],"version":"5.9.3"}
