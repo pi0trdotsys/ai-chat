@@ -2,8 +2,8 @@ import { useState, useCallback } from 'react'
 import { streamChat } from '@/api/chat'
 import type { Message } from '@/types/chat'
 
-export function useChat() {
-  const [messages, setMessages] = useState<Message[]>([])
+export function useChat(initialMessages: Message[] = []) {
+  const [messages, setMessages] = useState<Message[]>(initialMessages)
   const [isStreaming, setIsStreaming] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -47,5 +47,5 @@ export function useChat() {
 
   const clearMessages = useCallback(() => setMessages([]), [])
 
-  return { messages, isStreaming, error, sendMessage, clearMessages }
+  return { messages, setMessages, isStreaming, error, sendMessage, clearMessages }
 }

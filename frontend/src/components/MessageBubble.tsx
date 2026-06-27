@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion'
 import type { Message } from '@/types/chat'
+import { Markdown } from './Markdown'
 
 interface MessageBubbleProps {
   message: Message
@@ -49,8 +50,10 @@ export function MessageBubble({ message, isStreaming }: MessageBubbleProps) {
               />
             ))}
           </span>
-        ) : (
+        ) : isUser ? (
           <p className="whitespace-pre-wrap break-words">{message.content}</p>
+        ) : (
+          <Markdown content={message.content} />
         )}
       </div>
     </motion.div>

@@ -8,6 +8,7 @@ import { dirname } from 'path'
 
 const app = express()
 const ollama = new Ollama({ host: process.env.OLLAMA_URL || 'http://localhost:11434' })
+const DEFAULT_MODEL = process.env.DEFAULT_MODEL || 'dolphin3:8b'
 const JWT_SECRET = process.env.JWT_SECRET!
 const ACCESS_PASSWORD = process.env.ACCESS_PASSWORD!
 
@@ -63,7 +64,7 @@ const requireAuth = (req: express.Request, res: express.Response, next: express.
 }
 
 app.post('/api/chat', requireAuth, async (req, res) => {
-  const { messages, model = 'dolphin3:8b' } = req.body as {
+  const { messages, model = DEFAULT_MODEL } = req.body as {
     messages: { role: string; content: string }[]
     model?: string
   }
@@ -131,8 +132,15 @@ app.post('/api/chat', requireAuth, async (req, res) => {
   }
 })
 
-app.get('/api/health', (_req, res) => {
-  res.json({ status: 'ok' })
+app.get('/api/health', async (_req, res) => {
+  try {
+    const { models } = await ollama.list()
+    const available = models.some(m => m.name === DEFAULT_MODEL || m.name.startsWith(DEFAULT_MODEL.split(':')[0]))
+    res.json({ status: 'ok', ollama: 'up', model: DEFAULT_MODEL, modelLoaded: available })
+  } catch (err) {
+    log(`✗ Health: Ollama niedostępna: ${err instanceof Error ? err.message : String(err)}`)
+    res.status(503).json({ status: 'degraded', ollama: 'down', model: DEFAULT_MODEL, modelLoaded: false })
+  }
 })
 
 app.listen(3001, () => console.log('Backend działa na porcie 3001'))

@@ -1,23 +1,63 @@
 import { useEffect, useRef, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useChat } from '@/hooks/useChat'
+import { useHealth } from '@/hooks/useHealth'
 import { MessageBubble } from './MessageBubble'
-import { Sidebar, type Conversation } from './Sidebar'
+import { Sidebar } from './Sidebar'
+import {
+  loadConversations,
+  saveConversations,
+  emptyConversation,
+  deriveTitle,
+  type Conversation,
+} from '@/lib/conversations'
 
 export function ChatWindow({ onLogout }: { onLogout: () => void }) {
-  const { messages, isStreaming, error, sendMessage, clearMessages } = useChat()
+  const [boot] = useState(loadConversations)
+  const [conversations, setConversations] = useState<Conversation[]>(boot.conversations)
+  const [activeId, setActiveId] = useState<string>(boot.activeId)
+  const initialMessages = boot.conversations.find(c => c.id === boot.activeId)!.messages
+
+  const { messages, setMessages, isStreaming, error, sendMessage, clearMessages } = useChat(initialMessages)
+  const health = useHealth()
+
   const [input, setInput] = useState('')
   const [sidebarOpen, setSidebarOpen] = useState(false)
-  const [conversations, setConversations] = useState<Conversation[]>([
-    { id: '1', title: 'Nowa rozmowa', date: 'Dziś' },
-  ])
-  const [activeId, setActiveId] = useState<string>('1')
   const bottomRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
+
+  // Zapisz bieżące wiadomości do aktywnej rozmowy + wygeneruj tytuł
+  useEffect(() => {
+    setConversations(prev =>
+      prev.map(c => (c.id === activeId ? { ...c, messages, title: deriveTitle(messages) } : c))
+    )
+  }, [messages, activeId])
+
+  // Utrwal w localStorage (pomijamy zapis w trakcie streamingu, zapis końcowy gdy się zakończy)
+  useEffect(() => {
+    if (!isStreaming) saveConversations(conversations, activeId)
+  }, [conversations, activeId, isStreaming])
+
+  const handleSelect = (id: string) => {
+    if (id === activeId) return
+    const conv = conversations.find(c => c.id === id)
+    if (!conv) return
+    setActiveId(id)
+    setMessages(conv.messages)
+    setSidebarOpen(false)
+  }
+
+  const handleNew = () => {
+    const conv = emptyConversation()
+    setConversations(prev => [conv, ...prev])
+    setActiveId(conv.id)
+    setMessages([])
+    setSidebarOpen(false)
+  }
 
   const handleSubmit = async (e?: React.FormEvent) => {
     e?.preventDefault()
@@ -48,6 +88,18 @@ export function ChatWindow({ onLogout }: { onLogout: () => void }) {
     ta.style.height = Math.min(ta.scrollHeight, 120) + 'px'
   }
 
+  // Status połączenia z kontenerem modelu
+  const statusColor =
+    health.status === 'checking' ? '#9ca3af'
+    : health.ollama === 'down' ? '#ef4444'
+    : !health.modelLoaded ? '#f59e0b'
+    : '#22c55e'
+  const statusText =
+    health.status === 'checking' ? 'Sprawdzanie połączenia…'
+    : health.ollama === 'down' ? 'Brak połączenia z modelem'
+    : !health.modelLoaded ? 'Połączono, model niezaładowany'
+    : 'Połączono'
+
   return (
     <div className="flex h-screen w-screen overflow-hidden" style={{background:'linear-gradient(135deg,#0f0c29,#302b63,#24243e)'}}>
       <div
@@ -61,14 +113,8 @@ export function ChatWindow({ onLogout }: { onLogout: () => void }) {
           onClose={() => {}}
           conversations={conversations}
           activeId={activeId}
-          onSelect={() => {}}
-          onNew={() => {
-        const id = Math.random().toString(36).slice(2)
-        const newConv = { id, title: 'Nowa rozmowa', date: 'Dziś' }
-        setConversations(prev => [newConv, ...prev])
-        setActiveId(id)
-        clearMessages()
-      }}
+          onSelect={handleSelect}
+          onNew={handleNew}
           onLogout={onLogout}
         />
       </div>
@@ -79,15 +125,8 @@ export function ChatWindow({ onLogout }: { onLogout: () => void }) {
           onClose={() => setSidebarOpen(false)}
           conversations={conversations}
           activeId={activeId}
-          onSelect={() => {}}
-          onNew={() => {
-        const id = Math.random().toString(36).slice(2)
-        const newConv = { id, title: 'Nowa rozmowa', date: 'Dziś' }
-        setConversations(prev => [newConv, ...prev])
-        setActiveId(id)
-        clearMessages()
-        setSidebarOpen(false)
-      }}
+          onSelect={handleSelect}
+          onNew={handleNew}
           onLogout={onLogout}
         />
       </div>
@@ -105,12 +144,20 @@ export function ChatWindow({ onLogout }: { onLogout: () => void }) {
               <span key={i} style={{display:'block',width:18,height:1.5,borderRadius:2,background:'rgba(255,255,255,0.6)'}} />
             ))}
           </button>
-          <span
-            className="text-xs rounded-full px-3 py-1"
-            style={{background:'rgba(167,139,250,0.1)',border:'0.5px solid rgba(167,139,250,0.2)',color:'rgba(167,139,250,0.8)'}}
+
+          <div
+            className="flex items-center gap-2 text-xs rounded-full px-3 py-1"
+            style={{background:'rgba(167,139,250,0.1)',border:'0.5px solid rgba(167,139,250,0.2)',color:'rgba(167,139,250,0.85)'}}
+            title={statusText}
           >
-            dolphin3:8b
-          </span>
+            <motion.span
+              animate={health.status === 'checking' ? { opacity: [0.4, 1, 0.4] } : { opacity: 1 }}
+              transition={{ duration: 1.2, repeat: health.status === 'checking' ? Infinity : 0 }}
+              style={{display:'inline-block',width:7,height:7,borderRadius:'50%',background:statusColor,boxShadow:`0 0 6px ${statusColor}`}}
+            />
+            <span style={{fontFamily:'ui-monospace,monospace'}}>{health.model}</span>
+          </div>
+
           <button onClick={clearMessages} className="text-xs" style={{color:'rgba(255,255,255,0.3)'}}>
             Wyczyść
           </button>
@@ -130,7 +177,7 @@ export function ChatWindow({ onLogout }: { onLogout: () => void }) {
               <MessageBubble
                 key={msg.id}
                 message={msg}
-                isStreaming={isStreaming && i === messages.length - 1 && msg.role === 'assistant'}
+                isStreaming={isStreaming && i === messages.length - 1 && msg.role === 'assistant' && msg.content === ''}
               />
             ))}
           </AnimatePresence>
