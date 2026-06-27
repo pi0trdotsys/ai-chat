@@ -20,6 +20,8 @@ services:
       - FRONTEND_URL=${FRONTEND_URL}
     ports:
       - "3001:3001"
+    volumes:
+      - ./logs:/app/logs
     depends_on:
       - ollama
     restart: unless-stopped

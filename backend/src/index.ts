@@ -3,6 +3,8 @@ import cors from 'cors'
 import rateLimit from 'express-rate-limit'
 import jwt from 'jsonwebtoken'
 import { Ollama } from 'ollama'
+import { appendFile, mkdir } from 'fs/promises'
+import { dirname } from 'path'
 
 const app = express()
 const ollama = new Ollama({ host: process.env.OLLAMA_URL || 'http://localhost:11434' })
@@ -10,6 +12,16 @@ const JWT_SECRET = process.env.JWT_SECRET!
 const ACCESS_PASSWORD = process.env.ACCESS_PASSWORD!
 
 const log = (msg: string) => console.log(`[${new Date().toISOString()}] ${msg}`)
+
+const CONVO_LOG = process.env.CONVO_LOG || '/app/logs/conversations.jsonl'
+const logConversation = async (record: object) => {
+  try {
+    await mkdir(dirname(CONVO_LOG), { recursive: true })
+    await appendFile(CONVO_LOG, JSON.stringify(record) + '\n')
+  } catch (err) {
+    log(`✗ Nie udało się zapisać rozmowy: ${err instanceof Error ? err.message : String(err)}`)
+  }
+}
 
 app.use(cors({ origin: process.env.FRONTEND_URL || '*' }))
 app.use(express.json())
@@ -68,11 +80,13 @@ app.post('/api/chat', requireAuth, async (req, res) => {
   log(`▶ chat | model=${model} | wiadomości=${messages.length} | pytanie="${preview}${lastUser.length > 80 ? '…' : ''}"`)
 
   const started = Date.now()
+  let answer = ''
   try {
     const stream = await ollama.chat({ model, messages: messagesWithSystem, stream: true })
     for await (const chunk of stream) {
       const content = chunk.message.content
       if (content) {
+        answer += content
         res.write(`data: ${JSON.stringify({ content })}\n\n`)
       }
       if (chunk.done) {
@@ -89,12 +103,28 @@ app.post('/api/chat', requireAuth, async (req, res) => {
           `prompt ${promptTok} tok / ${promptMs.toFixed(0)}ms | ` +
           `odpowiedź ${genTok} tok / ${genSec.toFixed(2)}s | ${tps} tok/s`
         )
+        await logConversation({
+          ts: new Date().toISOString(),
+          ip: req.ip,
+          model,
+          question: lastUser,
+          answer,
+          stats: { wallMs, loadMs, promptTok, promptMs, genTok, genSec, tps },
+        })
       }
     }
     res.write('data: [DONE]\n\n')
   } catch (err) {
     const errMsg = err instanceof Error ? err.message : String(err)
     log(`✗ Ollama error po ${Date.now() - started}ms: ${errMsg}`)
+    await logConversation({
+      ts: new Date().toISOString(),
+      ip: req.ip,
+      model,
+      question: lastUser,
+      answer,
+      error: errMsg,
+    })
     res.write(`data: ${JSON.stringify({ error: errMsg })}\n\n`)
   } finally {
     res.end()
