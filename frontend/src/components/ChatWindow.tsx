@@ -167,10 +167,43 @@ export function ChatWindow({ onLogout }: { onLogout: () => void }) {
           <AnimatePresence initial={false}>
             {messages.length === 0 && (
               <motion.div
-                initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                className="flex items-center justify-center flex-1 min-h-48"
+                initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+                transition={{ duration: 0.4, ease: 'easeOut' }}
+                className="flex items-center justify-center flex-1 min-h-48 px-2"
               >
-                <p className="text-sm" style={{color:'rgba(255,255,255,0.2)'}}>Zadaj pytanie, żeby zacząć.</p>
+                <div
+                  className="max-w-md w-full text-center rounded-3xl px-7 py-8"
+                  style={{
+                    background:'linear-gradient(160deg,rgba(167,139,250,0.12),rgba(96,165,250,0.06))',
+                    border:'0.5px solid rgba(167,139,250,0.22)',
+                    backdropFilter:'blur(20px)',
+                    boxShadow:'0 8px 40px rgba(120,80,255,0.12)',
+                  }}
+                >
+                  <motion.div
+                    animate={{ y: [0, -6, 0] }}
+                    transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
+                    style={{fontSize:44,lineHeight:1,marginBottom:14}}
+                  >
+                    🐬
+                  </motion.div>
+                  <div className="flex items-center justify-center gap-2 mb-3">
+                    <span
+                      className="text-xs font-semibold rounded-full px-2.5 py-0.5"
+                      style={{background:'rgba(34,197,94,0.15)',border:'0.5px solid rgba(34,197,94,0.35)',color:'#86efac',letterSpacing:'0.05em'}}
+                    >
+                      UNCENSORED
+                    </span>
+                  </div>
+                  <h2 className="text-lg font-semibold mb-2.5" style={{color:'rgba(255,255,255,0.95)'}}>
+                    Pytaj o cokolwiek
+                  </h2>
+                  <p className="text-sm leading-relaxed" style={{color:'rgba(255,255,255,0.65)'}}>
+                    Działam w wersji <strong style={{color:'rgba(167,139,250,0.95)'}}>bez cenzury</strong>. W miarę
+                    moich możliwości odpowiem na każde pytanie i rozwieję każdą wątpliwość, niezależnie od tematu
+                    rozmowy. Pytaj śmiało i bez ograniczeń.
+                  </p>
+                </div>
               </motion.div>
             )}
             {messages.map((msg, i) => (
