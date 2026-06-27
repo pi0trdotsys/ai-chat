@@ -6,6 +6,7 @@ import { useModels } from '@/hooks/useModels'
 import { MessageBubble } from './MessageBubble'
 import { Sidebar } from './Sidebar'
 import { ModelPicker } from './ModelPicker'
+import { describeModel } from '@/lib/models'
 import {
   loadConversations,
   saveConversations,
@@ -41,9 +42,17 @@ export function ChatWindow({ onLogout }: { onLogout: () => void }) {
   const bottomRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
+  const [greeting, setGreeting] = useState<{ emoji: string; text: string } | null>(null)
+  const greetTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  useEffect(() => () => { if (greetTimer.current) clearTimeout(greetTimer.current) }, [])
+
   const handleModelChange = (name: string) => {
     setSelectedModel(name)
     localStorage.setItem(MODEL_KEY, name)
+    const meta = describeModel(name)
+    setGreeting({ emoji: meta.emoji, text: meta.greeting })
+    if (greetTimer.current) clearTimeout(greetTimer.current)
+    greetTimer.current = setTimeout(() => setGreeting(null), 9000)
   }
 
   const [modelHintSeen, setModelHintSeen] = useState(() => !!localStorage.getItem('ai-chat-model-hint'))
@@ -108,6 +117,7 @@ export function ChatWindow({ onLogout }: { onLogout: () => void }) {
     const text = input.trim()
     if (!text || isStreaming) return
     setInput('')
+    setGreeting(null)
     if (textareaRef.current) textareaRef.current.style.height = 'auto'
     await sendMessage(text)
   }
@@ -194,9 +204,9 @@ export function ChatWindow({ onLogout }: { onLogout: () => void }) {
               <span
                 className="text-xs"
                 style={{color:'rgba(255,255,255,0.4)',fontFamily:'ui-monospace,monospace'}}
-                title="Tokeny zużyte w tej sesji (wejście + wyjście)"
+                title="Łącznie fragmentów tekstu przetworzonych w tej sesji (Twoje pytania + odpowiedzi modelu). Im więcej, tym więcej pracy wykonał model."
               >
-                Σ {formatTokens(sessionTokens)} tok
+                {formatTokens(sessionTokens)} fragm.
               </span>
             )}
             <button onClick={clearMessages} className="text-xs" style={{color:'rgba(255,255,255,0.3)'}}>
@@ -280,8 +290,8 @@ export function ChatWindow({ onLogout }: { onLogout: () => void }) {
                   </span>
                 )}
                 {liveTokens > 0 && (
-                  <span style={{color:'rgba(255,255,255,0.4)'}}>
-                    · ≈ {liveTokens} tok
+                  <span style={{color:'rgba(255,255,255,0.4)'}} title="Tyle fragmentów tekstu model już napisał">
+                    · napisał ≈ {liveTokens}
                   </span>
                 )}
               </div>
@@ -290,6 +300,57 @@ export function ChatWindow({ onLogout }: { onLogout: () => void }) {
               </p>
             </motion.div>
           )}
+
+          <AnimatePresence>
+            {greeting && (
+              <motion.div
+                key="greeting"
+                initial={{ opacity: 0, y: 14, scale: 0.95 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95, transition: { duration: 0.2 } }}
+                transition={{ type: 'spring', stiffness: 260, damping: 20 }}
+                className="flex gap-2 items-end self-start"
+                style={{maxWidth:'80%'}}
+              >
+                <motion.div
+                  initial={{ rotate: -20 }}
+                  animate={{ rotate: [0, -12, 12, -6, 0] }}
+                  transition={{ duration: 0.7, ease: 'easeOut' }}
+                  className="flex-shrink-0 flex items-center justify-center rounded-full"
+                  style={{
+                    width:28,height:28,fontSize:15,
+                    background:'linear-gradient(135deg,rgba(167,139,250,0.35),rgba(96,165,250,0.35))',
+                    border:'0.5px solid rgba(167,139,250,0.4)',
+                  }}
+                >
+                  {greeting.emoji}
+                </motion.div>
+                <div
+                  className="px-3 py-2 text-sm leading-relaxed relative overflow-hidden"
+                  style={{
+                    borderRadius:'14px 14px 14px 4px',
+                    background:'linear-gradient(135deg,rgba(167,139,250,0.16),rgba(96,165,250,0.1))',
+                    border:'0.5px solid rgba(167,139,250,0.3)',
+                    color:'rgba(255,255,255,0.92)',
+                    backdropFilter:'blur(10px)',
+                  }}
+                >
+                  <motion.div
+                    aria-hidden
+                    initial={{ x: '-120%' }}
+                    animate={{ x: '220%' }}
+                    transition={{ duration: 1.1, ease: 'easeInOut', delay: 0.2 }}
+                    style={{
+                      position:'absolute',top:0,bottom:0,width:'40%',
+                      background:'linear-gradient(90deg,transparent,rgba(255,255,255,0.18),transparent)',
+                      pointerEvents:'none',
+                    }}
+                  />
+                  {greeting.text}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           {error && (
             <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-red-400 text-sm text-center">

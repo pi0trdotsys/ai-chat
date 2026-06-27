@@ -57,12 +57,18 @@ export function MessageBubble({ message, isStreaming }: MessageBubbleProps) {
             <Markdown content={message.content} />
             {message.stats && (
               <div
-                className="flex items-center gap-2 mt-2 pt-1.5 flex-wrap"
-                style={{borderTop:'0.5px solid rgba(255,255,255,0.06)',fontSize:10,color:'rgba(255,255,255,0.35)'}}
+                className="flex items-center gap-2.5 mt-2 pt-1.5 flex-wrap"
+                style={{borderTop:'0.5px solid rgba(255,255,255,0.06)',fontSize:10,color:'rgba(255,255,255,0.4)'}}
               >
-                <span title="Tokeny wejściowe (Twoje pytanie + kontekst)">📥 {message.stats.promptTok}</span>
-                <span title="Tokeny wygenerowane w odpowiedzi">📤 {message.stats.genTok}</span>
-                <span title="Prędkość generacji">⚡ {message.stats.tps} tok/s</span>
+                <span title="Ile fragmentów tekstu model wziął pod uwagę (Twoje pytanie i wcześniejsza rozmowa). Fragment to ok. 3-4 znaki.">
+                  📖 przeczytał {message.stats.promptTok}
+                </span>
+                <span title="Ile fragmentów tekstu model napisał w tej odpowiedzi.">
+                  ✍️ napisał {message.stats.genTok}
+                </span>
+                <span title="Jak szybko pisał - fragmentów na sekundę.">
+                  ⚡ {message.stats.tps.toString().replace('.', ',')}/s
+                </span>
               </div>
             )}
           </>

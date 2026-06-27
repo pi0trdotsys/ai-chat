@@ -113,19 +113,31 @@ export function ModelPicker({ health, models, value, defaultModel, onChange, hin
                 const meta = describeModel(m.name)
                 const active = m.name === current
                 return (
-                  <button
+                  <motion.button
                     key={m.name}
                     type="button"
                     onClick={() => { onChange(m.name); setOpen(false) }}
-                    className="text-left rounded-xl px-3 py-2.5 transition-colors"
+                    whileHover={{ scale: 1.015, backgroundColor: 'rgba(167,139,250,0.1)' }}
+                    whileTap={{ scale: 0.98 }}
+                    className="text-left rounded-xl px-3 py-2.5"
                     style={{
                       background: active ? 'rgba(167,139,250,0.16)' : 'transparent',
                       border: active ? '0.5px solid rgba(167,139,250,0.3)' : '0.5px solid transparent',
                     }}
                   >
                     <div className="flex items-center justify-between gap-2">
-                      <span className="text-sm font-medium" style={{color:'rgba(255,255,255,0.92)'}}>
+                      <span className="flex items-center gap-1.5 text-sm font-medium" style={{color:'rgba(255,255,255,0.92)'}}>
+                        <span>{meta.emoji}</span>
                         {meta.label}
+                        {active && (
+                          <motion.span
+                            initial={{ scale: 0 }} animate={{ scale: 1 }}
+                            transition={{ type: 'spring', stiffness: 500, damping: 18 }}
+                            style={{color:'#86efac',fontSize:12}}
+                          >
+                            ✓
+                          </motion.span>
+                        )}
                       </span>
                       <span style={{fontSize:10,color:'rgba(255,255,255,0.3)'}}>
                         {m.sizeMB >= 1000 ? `${(m.sizeMB / 1000).toFixed(1)} GB` : `${m.sizeMB} MB`}
@@ -150,7 +162,7 @@ export function ModelPicker({ health, models, value, defaultModel, onChange, hin
                     <p className="mt-1.5 leading-snug" style={{fontSize:11,color:'rgba(255,255,255,0.55)'}}>
                       {meta.desc}
                     </p>
-                  </button>
+                  </motion.button>
                 )
               })}
             </div>
