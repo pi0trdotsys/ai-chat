@@ -32,7 +32,9 @@ function pushDuration(ms: number): number[] {
   return next
 }
 
-export function useChat(initialMessages: Message[] = [], model?: string) {
+const genId = () => Math.random().toString(36).slice(2)
+
+export function useChat(initialMessages: Message[] = [], model?: string, systemPrompt?: string) {
   const [messages, setMessages] = useState<Message[]>(initialMessages)
   const [isStreaming, setIsStreaming] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -46,23 +48,10 @@ export function useChat(initialMessages: Message[] = [], model?: string) {
 
   const stop = useCallback(() => abortRef.current?.abort(), [])
 
-  const sendMessage = useCallback(async (content: string) => {
-    const userMessage: Message = {
-      id: Math.random().toString(36).slice(2),
-      role: 'user',
-      content,
-      createdAt: Date.now(),
-    }
-
-    const assistantMessage: Message = {
-      id: Math.random().toString(36).slice(2),
-      role: 'assistant',
-      content: '',
-      createdAt: Date.now(),
-    }
-
-    const updatedMessages = [...messages, userMessage]
-    setMessages([...updatedMessages, assistantMessage])
+  // Rdzeń: generuje odpowiedź asystenta dla podanej listy wiadomości (kończącej się pytaniem użytkownika)
+  const runCompletion = useCallback(async (baseMessages: Message[]) => {
+    const assistantMessage: Message = { id: genId(), role: 'assistant', content: '', createdAt: Date.now() }
+    setMessages([...baseMessages, assistantMessage])
     setIsStreaming(true)
     setError(null)
 
@@ -75,26 +64,20 @@ export function useChat(initialMessages: Message[] = [], model?: string) {
     abortRef.current = controller
 
     try {
-      for await (const event of streamChat(updatedMessages, model, controller.signal)) {
+      for await (const event of streamChat(baseMessages, { model, system: systemPrompt, signal: controller.signal })) {
         if ('content' in event) {
           setMessages(prev =>
-            prev.map(m =>
-              m.id === assistantMessage.id
-                ? { ...m, content: m.content + event.content }
-                : m
-            )
+            prev.map(m => (m.id === assistantMessage.id ? { ...m, content: m.content + event.content } : m))
           )
         } else if ('stats' in event) {
-          setMessages(prev =>
-            prev.map(m => (m.id === assistantMessage.id ? { ...m, stats: event.stats } : m))
-          )
+          setMessages(prev => prev.map(m => (m.id === assistantMessage.id ? { ...m, stats: event.stats } : m)))
           setSessionTokens(prev => prev + event.stats.promptTok + event.stats.genTok)
         }
       }
       setEstimateMs(median(pushDuration(Date.now() - startedAt)))
     } catch (err) {
-      // Przerwanie przez użytkownika - zachowaj to, co już zostało napisane, bez błędu
       if (err instanceof DOMException && err.name === 'AbortError') {
+        // Przerwanie - zachowaj częściową odpowiedź, usuń tylko pusty placeholder
         setMessages(prev => prev.filter(m => m.id !== assistantMessage.id || m.content !== ''))
       } else {
         setError(err instanceof Error ? err.message : 'Nieznany błąd')
@@ -106,9 +89,36 @@ export function useChat(initialMessages: Message[] = [], model?: string) {
       abortRef.current = null
       setIsStreaming(false)
     }
-  }, [messages, model])
+  }, [model, systemPrompt])
+
+  const sendMessage = useCallback(async (content: string) => {
+    const userMessage: Message = { id: genId(), role: 'user', content, createdAt: Date.now() }
+    await runCompletion([...messages, userMessage])
+  }, [messages, runCompletion])
+
+  // Ponów ostatnią odpowiedź (usuwa końcową odpowiedź asystenta i generuje od nowa)
+  const regenerate = useCallback(async () => {
+    if (isStreaming) return
+    let base = messages
+    if (base.length && base[base.length - 1].role === 'assistant') base = base.slice(0, -1)
+    if (!base.length || base[base.length - 1].role !== 'user') return
+    await runCompletion(base)
+  }, [messages, isStreaming, runCompletion])
+
+  // Edytuj wiadomość użytkownika i wygeneruj odpowiedź od nowa (ucina wszystko po niej)
+  const editMessage = useCallback(async (id: string, content: string) => {
+    if (isStreaming) return
+    const idx = messages.findIndex(m => m.id === id)
+    if (idx === -1) return
+    const edited: Message = { ...messages[idx], content, createdAt: Date.now() }
+    await runCompletion([...messages.slice(0, idx), edited])
+  }, [messages, isStreaming, runCompletion])
 
   const clearMessages = useCallback(() => setMessages([]), [])
 
-  return { messages, setMessages, isStreaming, error, sendMessage, stop, clearMessages, elapsedMs, estimateMs, sessionTokens }
+  return {
+    messages, setMessages, isStreaming, error,
+    sendMessage, regenerate, editMessage, stop, clearMessages,
+    elapsedMs, estimateMs, sessionTokens,
+  }
 }

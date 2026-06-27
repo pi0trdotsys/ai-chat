@@ -119,9 +119,10 @@ const requireAuth = (req: express.Request, res: express.Response, next: express.
 }
 
 app.post('/api/chat', requireAuth, async (req, res) => {
-  const { messages, model = DEFAULT_MODEL } = req.body as {
+  const { messages, model = DEFAULT_MODEL, system } = req.body as {
     messages: { role: string; content: string }[]
     model?: string
+    system?: string
   }
 
   res.setHeader('Content-Type', 'text/event-stream')
@@ -141,12 +142,18 @@ app.post('/api/chat', requireAuth, async (req, res) => {
       'używaj **pogrubienia** dla najważniejszych rzeczy, *kursywy* dla akcentów i niuansów, ' +
       'nagłówków i list dla struktury, bloków kodu dla kodu, a tabel do porównań. ' +
       'Wplataj trafne emoji tam, gdzie poprawiają czytelność i ton (nie przesadzaj). ' +
-      'Zawsze odpowiadaj po polsku, poprawną polszczyzną.',
+      'Zawsze odpowiadaj po polsku, poprawną polszczyzną. ' +
+      'Bezwzględnie używaj poprawnych polskich znaków diakrytycznych (ą, ć, ę, ł, ń, ó, ś, ź, ż) - nigdy ich nie pomijaj ani nie zastępuj.',
   }
   // Okno przesuwne: do modelu trafia tylko system + ostatnie N wiadomości,
   // żeby skrócić czas przetwarzania promptu przy długich rozmowach.
   const trimmed = messages.slice(-MAX_CONTEXT_MESSAGES)
-  const messagesWithSystem = [systemPrompt, ...trimmed]
+  // Persona/własny system prompt z danej rozmowy - jako druga wiadomość systemowa
+  const personaPrompt =
+    typeof system === 'string' && system.trim()
+      ? [{ role: 'system', content: `Dodatkowe instrukcje / persona od użytkownika (stosuj je, o ile nie są sprzeczne z powyższym):\n${system.trim()}` }]
+      : []
+  const messagesWithSystem = [systemPrompt, ...personaPrompt, ...trimmed]
 
   const lastUser = [...messages].reverse().find(m => m.role === 'user')?.content ?? ''
   const preview = lastUser.replace(/\s+/g, ' ').slice(0, 80)

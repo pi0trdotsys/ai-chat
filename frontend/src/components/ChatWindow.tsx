@@ -6,6 +6,7 @@ import { useModels } from '@/hooks/useModels'
 import { MessageBubble } from './MessageBubble'
 import { Sidebar } from './Sidebar'
 import { ModelPicker } from './ModelPicker'
+import { PersonaPanel } from './PersonaPanel'
 import { describeModel } from '@/lib/models'
 import {
   loadConversations,
@@ -33,7 +34,9 @@ export function ChatWindow({ onLogout }: { onLogout: () => void }) {
   const initialMessages = boot.conversations.find(c => c.id === boot.activeId)!.messages
 
   const [selectedModel, setSelectedModel] = useState(() => localStorage.getItem(MODEL_KEY) || '')
-  const { messages, setMessages, isStreaming, error, sendMessage, stop, clearMessages, elapsedMs, estimateMs, sessionTokens } = useChat(initialMessages, selectedModel || undefined)
+  const activeConv = conversations.find(c => c.id === activeId)
+  const { messages, setMessages, isStreaming, error, sendMessage, regenerate, editMessage, stop, clearMessages, elapsedMs, estimateMs, sessionTokens } =
+    useChat(initialMessages, selectedModel || undefined, activeConv?.systemPrompt)
   const health = useHealth()
   const { models, defaultModel } = useModels()
 
@@ -92,10 +95,21 @@ export function ChatWindow({ onLogout }: { onLogout: () => void }) {
     return () => window.removeEventListener('keydown', onKey)
   }, [isStreaming, stop])
 
-  // Zapisz bieżące wiadomości do aktywnej rozmowy + wygeneruj tytuł
+  // Zapisz bieżące wiadomości do aktywnej rozmowy; auto-tytuł tylko gdy nie zmieniono ręcznie
   useEffect(() => {
     setConversations(prev =>
-      prev.map(c => (c.id === activeId ? { ...c, messages, title: deriveTitle(messages) } : c))
+      prev.map(c => {
+        if (c.id !== activeId) return c
+        const changed =
+          c.messages.length !== messages.length ||
+          (messages.length > 0 && c.messages[c.messages.length - 1]?.content !== messages[messages.length - 1]?.content)
+        return {
+          ...c,
+          messages,
+          title: c.title === 'Nowa rozmowa' ? deriveTitle(messages) : c.title,
+          updatedAt: changed ? Date.now() : c.updatedAt,
+        }
+      })
     )
   }, [messages, activeId])
 
@@ -111,6 +125,15 @@ export function ChatWindow({ onLogout }: { onLogout: () => void }) {
     setActiveId(id)
     setMessages(conv.messages)
     setSidebarOpen(false)
+  }
+
+  const handleRename = (id: string, title: string) => {
+    setConversations(prev => prev.map(c => (c.id === id ? { ...c, title } : c)))
+  }
+
+  const [showPersona, setShowPersona] = useState(false)
+  const handlePersonaChange = (text: string) => {
+    setConversations(prev => prev.map(c => (c.id === activeId ? { ...c, systemPrompt: text.trim() || undefined } : c)))
   }
 
   const handleNew = () => {
@@ -179,6 +202,7 @@ export function ChatWindow({ onLogout }: { onLogout: () => void }) {
           onSelect={handleSelect}
           onNew={handleNew}
           onDelete={handleDelete}
+          onRename={handleRename}
           onLogout={onLogout}
         />
       </div>
@@ -192,6 +216,7 @@ export function ChatWindow({ onLogout }: { onLogout: () => void }) {
           onSelect={handleSelect}
           onNew={handleNew}
           onDelete={handleDelete}
+          onRename={handleRename}
           onLogout={onLogout}
         />
       </div>
@@ -230,11 +255,29 @@ export function ChatWindow({ onLogout }: { onLogout: () => void }) {
                 {formatTokens(sessionTokens)} fragm.
               </span>
             )}
+            <button
+              onClick={() => setShowPersona(true)}
+              className="text-xs flex items-center gap-1"
+              style={{color: activeConv?.systemPrompt ? 'rgba(167,139,250,0.9)' : 'rgba(255,255,255,0.3)'}}
+              title="Ustaw personę / własne instrukcje dla tej rozmowy"
+            >
+              🎭 Persona{activeConv?.systemPrompt ? ' •' : ''}
+            </button>
             <button onClick={clearMessages} className="text-xs" style={{color:'rgba(255,255,255,0.3)'}}>
               Wyczyść
             </button>
           </div>
         </div>
+
+        <AnimatePresence>
+          {showPersona && (
+            <PersonaPanel
+              value={activeConv?.systemPrompt ?? ''}
+              onSave={(text) => { handlePersonaChange(text); setShowPersona(false) }}
+              onClose={() => setShowPersona(false)}
+            />
+          )}
+        </AnimatePresence>
 
         <div
           ref={scrollRef}
@@ -288,6 +331,9 @@ export function ChatWindow({ onLogout }: { onLogout: () => void }) {
                 key={msg.id}
                 message={msg}
                 isStreaming={isStreaming && i === messages.length - 1 && msg.role === 'assistant'}
+                isLast={i === messages.length - 1}
+                onRegenerate={regenerate}
+                onEdit={editMessage}
               />
             ))}
           </AnimatePresence>

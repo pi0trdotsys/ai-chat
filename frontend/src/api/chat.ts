@@ -13,7 +13,8 @@ export async function fetchToken(password: string): Promise<string> {
   return data.token
 }
 
-export async function* streamChat(messages: Message[], model?: string, signal?: AbortSignal): AsyncGenerator<ChatEvent> {
+export async function* streamChat(messages: Message[], opts: { model?: string; system?: string; signal?: AbortSignal } = {}): AsyncGenerator<ChatEvent> {
+  const { model, system, signal } = opts
   const res = await fetch('/api/chat', {
     method: 'POST',
     headers: {
@@ -23,6 +24,7 @@ export async function* streamChat(messages: Message[], model?: string, signal?: 
     body: JSON.stringify({
       messages: messages.map(({ role, content }) => ({ role, content })),
       ...(model ? { model } : {}),
+      ...(system ? { system } : {}),
     }),
     signal,
   })
