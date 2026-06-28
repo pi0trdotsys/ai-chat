@@ -78,7 +78,7 @@ export function ChatWindow({ onLogout }: { onLogout: () => void }) {
     messages, setMessages, isStreaming, error, sendMessage, regenerate,
     editMessage, stop, clearMessages, elapsedMs, estimateMs,
     sessionTokens, sessionEnergyKWh, sessionWaterL,
-  } = useChat(initialMessages, selectedModel, activeConv?.systemPrompt)
+  } = useChat(initialMessages, selectedModel, activeConv?.systemPrompt, activeId)
 
   const handleSelectModel = (model: string) => {
     setSelectedModel(model)

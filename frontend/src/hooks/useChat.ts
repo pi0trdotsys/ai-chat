@@ -34,19 +34,42 @@ function pushDuration(ms: number): number[] {
 
 const genId = () => Math.random().toString(36).slice(2)
 
-export function useChat(initialMessages: Message[] = [], model?: string, systemPrompt?: string) {
+const STATS_PREFIX = 'ai-chat-stats-'
+
+function readStats(convId: string) {
+  try {
+    const raw = localStorage.getItem(STATS_PREFIX + convId)
+    return raw ? (JSON.parse(raw) as { tokens: number; energyKWh: number; waterL: number }) : null
+  } catch { return null }
+}
+
+function saveStats(convId: string, tokens: number, energyKWh: number, waterL: number) {
+  try {
+    localStorage.setItem(STATS_PREFIX + convId, JSON.stringify({ tokens, energyKWh, waterL }))
+  } catch {}
+}
+
+export function useChat(initialMessages: Message[] = [], model?: string, systemPrompt?: string, convId?: string) {
   const [messages, setMessages] = useState<Message[]>(initialMessages)
   const [isStreaming, setIsStreaming] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [elapsedMs, setElapsedMs] = useState(0)
   const [estimateMs, setEstimateMs] = useState(() => median(readDurations()))
-  const [sessionTokens, setSessionTokens] = useState(0)
-  const [sessionEnergyKWh, setSessionEnergyKWh] = useState(0)
-  const [sessionWaterL, setSessionWaterL] = useState(0)
+  const [sessionTokens, setSessionTokens] = useState(() => (convId ? readStats(convId)?.tokens ?? 0 : 0))
+  const [sessionEnergyKWh, setSessionEnergyKWh] = useState(() => (convId ? readStats(convId)?.energyKWh ?? 0 : 0))
+  const [sessionWaterL, setSessionWaterL] = useState(() => (convId ? readStats(convId)?.waterL ?? 0 : 0))
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const abortRef = useRef<AbortController | null>(null)
 
   useEffect(() => () => { if (timerRef.current) clearInterval(timerRef.current) }, [])
+
+  useEffect(() => {
+    if (!convId) return
+    const saved = readStats(convId)
+    setSessionTokens(saved?.tokens ?? 0)
+    setSessionEnergyKWh(saved?.energyKWh ?? 0)
+    setSessionWaterL(saved?.waterL ?? 0)
+  }, [convId])
 
   const stop = useCallback(() => abortRef.current?.abort(), [])
 
@@ -76,6 +99,14 @@ export function useChat(initialMessages: Message[] = [], model?: string, systemP
           setSessionTokens(prev => prev + event.stats.promptTok + event.stats.genTok)
           setSessionEnergyKWh(prev => prev + (event.stats.energyKWh ?? 0))
           setSessionWaterL(prev => prev + (event.stats.waterL ?? 0))
+          if (convId) {
+            const saved = readStats(convId) ?? { tokens: 0, energyKWh: 0, waterL: 0 }
+            saveStats(convId,
+              saved.tokens + event.stats.promptTok + event.stats.genTok,
+              saved.energyKWh + (event.stats.energyKWh ?? 0),
+              saved.waterL + (event.stats.waterL ?? 0),
+            )
+          }
         }
       }
       setEstimateMs(median(pushDuration(Date.now() - startedAt)))

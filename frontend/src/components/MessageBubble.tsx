@@ -121,7 +121,7 @@ export function MessageBubble({ message, isStreaming, isLast, onRegenerate, onEd
           ) : isUser ? (
             <p className="whitespace-pre-wrap break-words">{message.content}</p>
           ) : isStreaming ? (
-            <p className="whitespace-pre-wrap break-words">{message.content}</p>
+            <Markdown content={message.content} />
           ) : (
             <>
               <Markdown content={message.content} />

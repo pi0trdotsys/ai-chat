@@ -185,7 +185,7 @@ app.post('/api/chat', requireAuth, async (req, res) => {
       '- Listy punktowane lub numerowane - wyliczenia, kroki, opcje\n' +
       '- Tabele Markdown - ZAWSZE przy porównaniach i zestawieniach (min. 2 kolumny)\n' +
       '- Bloki kodu - każdy kod, komenda, ścieżka pliku\n' +
-      '- Emoji - dobieraj trafnie do kontekstu, 2-4 na całą odpowiedź\n' +
+      '- Emoji - OBOWIAZKOWO przy nagłówkach i kluczowych punktach, dobieraj trafnie do tematu\n' +
       '\nOdpowiedź krótka (jedno zdanie) = bez formatowania. Odpowiedź rozbudowana = pełne formatowanie obowiązkowo. ' +
       'Zawsze po polsku z polskimi znakami (ą ć ę ł ń ó ś ź ż). Nigdy cyrylica ani znaki chińskie.',
   }
