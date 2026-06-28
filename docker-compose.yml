@@ -23,7 +23,7 @@ services:
     container_name: ai-backend
     environment:
       - OLLAMA_URL=http://ollama:11434
-      - DEFAULT_MODEL=${DEFAULT_MODEL:-dolphin3:8b}
+      - DEFAULT_MODEL=${DEFAULT_MODEL:-huihui_ai/dolphin3-abliterated:8b}
       - JWT_SECRET=${JWT_SECRET}
       - ACCESS_PASSWORD=${ACCESS_PASSWORD}
       - FRONTEND_URL=${FRONTEND_URL}
