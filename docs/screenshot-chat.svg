@@ -1,0 +1,100 @@
+<svg viewBox="0 0 900 600" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0f0c29"/>
+      <stop offset="0.5" stop-color="#1a1730"/>
+      <stop offset="1" stop-color="#0f0c29"/>
+    </linearGradient>
+    <linearGradient id="grad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#a78bfa"/>
+      <stop offset="1" stop-color="#60a5fa"/>
+    </linearGradient>
+    <linearGradient id="userbubble" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#a78bfa" stop-opacity="0.25"/>
+      <stop offset="1" stop-color="#60a5fa" stop-opacity="0.15"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="900" height="600" fill="url(#bg)"/>
+
+  <!-- Sidebar -->
+  <rect width="240" height="600" fill="rgba(255,255,255,0.025)" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+
+  <!-- Sidebar header -->
+  <rect x="12" y="14" width="216" height="36" rx="10" fill="url(#grad)" opacity="0.85"/>
+  <text x="80" y="37" font-size="13" font-weight="700" fill="white">+ Nowa rozmowa</text>
+
+  <!-- Wordmark in sidebar -->
+  <text x="20" y="75" font-size="18" font-weight="700" fill="white">Bez </text>
+  <text x="62" y="75" font-size="18" font-weight="700" fill="url(#grad)">Filtra</text>
+
+  <!-- Conversation list -->
+  <text x="16" y="108" font-size="9" fill="rgba(255,255,255,0.3)" letter-spacing="1">DZIŚ</text>
+  <rect x="8" y="114" width="224" height="36" rx="8" fill="rgba(167,139,250,0.15)"/>
+  <text x="20" y="137" font-size="12" fill="rgba(255,255,255,0.9)">Jak działa silnik rakietowy</text>
+  <rect x="8" y="155" width="224" height="36" rx="8" fill="transparent"/>
+  <text x="20" y="178" font-size="12" fill="rgba(255,255,255,0.5)">Historia kryptografii</text>
+  <rect x="8" y="196" width="224" height="36" rx="8" fill="transparent"/>
+  <text x="20" y="219" font-size="12" fill="rgba(255,255,255,0.5)">Przepis na bigos</text>
+
+  <!-- Sidebar footer -->
+  <text x="120" y="575" text-anchor="middle" font-size="9" fill="rgba(255,255,255,0.2)">NullPointer Studio</text>
+
+  <!-- Main area -->
+  <!-- Header -->
+  <rect x="240" y="0" width="660" height="52" fill="rgba(255,255,255,0.02)" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+
+  <!-- Model pill -->
+  <rect x="390" y="12" width="160" height="28" rx="14" fill="rgba(167,139,250,0.1)" stroke="rgba(167,139,250,0.22)" stroke-width="0.5"/>
+  <circle cx="406" cy="26" r="4" fill="#4ade80"/>
+  <text x="415" y="30" font-size="11" font-weight="500" fill="rgba(255,255,255,0.85)">🐬 Dolphin PL (8B)</text>
+
+  <!-- Stats in header -->
+  <text x="570" y="30" font-size="10" fill="rgba(255,255,255,0.35)">📊 2.4k tok</text>
+  <text x="630" y="30" font-size="10" fill="rgba(255,255,255,0.35)">🔋 3.2 Wh</text>
+
+  <!-- Persona button -->
+  <rect x="740" y="12" width="76" height="28" rx="8" fill="rgba(255,255,255,0.05)" stroke="rgba(255,255,255,0.1)" stroke-width="0.5"/>
+  <text x="778" y="30" text-anchor="middle" font-size="11" fill="rgba(255,255,255,0.6)">🎭 Persona</text>
+
+  <!-- Chat messages -->
+  <!-- User message -->
+  <rect x="560" y="80" width="300" height="54" rx="14" fill="url(#userbubble)" stroke="rgba(167,139,250,0.2)" stroke-width="0.5"/>
+  <text x="575" y="102" font-size="12" fill="rgba(255,255,255,0.9)">Jak działa silnik rakietowy?</text>
+  <text x="845" y="148" text-anchor="end" font-size="10" fill="rgba(255,255,255,0.3)">12:34</text>
+
+  <!-- AI message -->
+  <text x="270" y="175" font-size="16">🐬</text>
+  <rect x="294" y="163" width="520" height="180" rx="14" fill="rgba(255,255,255,0.04)" stroke="rgba(255,255,255,0.07)" stroke-width="0.5"/>
+
+  <!-- Bold heading -->
+  <text x="312" y="186" font-size="13" font-weight="700" fill="rgba(255,255,255,0.9)">## Zasada działania silnika rakietowego 🚀</text>
+
+  <text x="312" y="210" font-size="12" fill="rgba(255,255,255,0.7)">Silnik rakietowy działa na zasadzie </text>
+  <text x="498" y="210" font-size="12" font-weight="700" fill="rgba(255,255,255,0.9)">III zasady Newtona</text>
+  <text x="620" y="210" font-size="12" fill="rgba(255,255,255,0.7)"> - każda akcja</text>
+  <text x="312" y="228" font-size="12" fill="rgba(255,255,255,0.7)">wywołuje równą i przeciwną reakcję.</text>
+
+  <!-- Table -->
+  <rect x="312" y="238" width="490" height="24" rx="4" fill="rgba(167,139,250,0.1)"/>
+  <text x="320" y="254" font-size="11" font-weight="600" fill="rgba(255,255,255,0.8)">Składnik</text>
+  <text x="460" y="254" font-size="11" font-weight="600" fill="rgba(255,255,255,0.8)">Funkcja</text>
+  <line x1="312" y1="262" x2="802" y2="262" stroke="rgba(255,255,255,0.08)" stroke-width="1"/>
+  <text x="320" y="278" font-size="11" fill="rgba(255,255,255,0.6)">Komora spalania</text>
+  <text x="460" y="278" font-size="11" fill="rgba(255,255,255,0.6)">Mieszanie i spalanie paliwa</text>
+  <line x1="312" y1="285" x2="802" y2="285" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+  <text x="320" y="300" font-size="11" fill="rgba(255,255,255,0.6)">Dysza de Lavala</text>
+  <text x="460" y="300" font-size="11" fill="rgba(255,255,255,0.6)">Przyspieszanie gazów do prędkości naddźwiękowej</text>
+  <line x1="312" y1="307" x2="802" y2="307" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+  <text x="320" y="322" font-size="11" fill="rgba(255,255,255,0.6)">Turbopompa</text>
+  <text x="460" y="322" font-size="11" fill="rgba(255,255,255,0.6)">Tłoczenie paliwa pod ciśnieniem</text>
+
+  <!-- Stats bar -->
+  <text x="312" y="358" font-size="10" fill="rgba(255,255,255,0.3)">📊 128→342 tok · ⚡ 11.4 tok/s · ⏱ 29.9s · 🔋 0.54 Wh</text>
+
+  <!-- Input area -->
+  <rect x="256" y="540" width="628" height="48" rx="14" fill="rgba(255,255,255,0.05)" stroke="rgba(167,139,250,0.2)" stroke-width="1"/>
+  <text x="276" y="570" font-size="12" fill="rgba(255,255,255,0.25)">Zapytaj o cokolwiek, bez ograniczeń…</text>
+  <rect x="844" y="550" width="28" height="28" rx="8" fill="url(#grad)" opacity="0.8"/>
+  <text x="858" y="569" text-anchor="middle" font-size="14" fill="white">↑</text>
+</svg>

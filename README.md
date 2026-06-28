@@ -14,6 +14,20 @@
 
 ---
 
+## Zrzuty ekranu
+
+<div align="center">
+<table>
+<tr>
+<td align="center"><img src="docs/screenshot-login.svg" width="240"/><br/><sub>Ekran logowania</sub></td>
+<td align="center"><img src="docs/screenshot-chat.svg" width="420"/><br/><sub>Interfejs czatu z tabelą i statystykami</sub></td>
+<td align="center"><img src="docs/screenshot-model-picker.svg" width="240"/><br/><sub>Picker modelu</sub></td>
+</tr>
+</table>
+</div>
+
+---
+
 ## Co to jest?
 
 **Bez Filtra** to samodzielnie hostowany interfejs do modeli językowych (LLM) uruchamianych lokalnie przez [Ollama](https://ollama.ai). Działa na własnym serwerze, nie wysyła żadnych danych do zewnętrznych serwisów i nie nakłada żadnych ograniczeń na tematy rozmów.
