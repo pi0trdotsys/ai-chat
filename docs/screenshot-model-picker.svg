@@ -1,4 +1,4 @@
-<svg viewBox="0 0 480 320" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif">
+<svg viewBox="0 0 360 260" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif">
   <defs>
     <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0" stop-color="#0f0c29"/>
@@ -10,52 +10,45 @@
     </linearGradient>
   </defs>
 
-  <rect width="480" height="320" fill="url(#bg)"/>
+  <rect width="360" height="260" fill="url(#bg)"/>
+  <rect width="360" height="260" fill="rgba(0,0,0,0.35)"/>
 
-  <!-- Blurred backdrop -->
-  <rect width="480" height="320" fill="rgba(0,0,0,0.4)"/>
+  <!-- Trigger pill (za dropdownem) -->
+  <rect x="96" y="14" width="168" height="28" rx="14" fill="rgba(167,139,250,0.1)" stroke="rgba(167,139,250,0.22)" stroke-width="0.5"/>
+  <circle cx="112" cy="28" r="4" fill="#4ade80"/>
+  <text x="121" y="32" font-size="11" font-weight="500" fill="rgba(255,255,255,0.85)">🐬 Dolphin PL (8B) ▾</text>
 
-  <!-- Model picker dropdown -->
-  <rect x="120" y="40" width="240" height="240" rx="16" fill="rgba(22,19,46,0.97)" stroke="rgba(167,139,250,0.25)" stroke-width="0.5"/>
+  <!-- Dropdown card -->
+  <rect x="60" y="50" width="240" height="196" rx="14" fill="rgba(22,19,46,0.98)" stroke="rgba(167,139,250,0.25)" stroke-width="0.5"/>
 
   <!-- Header -->
-  <rect x="120" y="40" width="240" height="36" rx="16" fill="rgba(22,19,46,0.97)"/>
-  <rect x="120" y="60" width="240" height="16" fill="rgba(22,19,46,0.97)"/>
-  <text x="140" y="63" font-size="9" fill="rgba(255,255,255,0.3)" letter-spacing="2">WYBIERZ MODEL</text>
-  <line x1="120" y1="76" x2="360" y2="76" stroke="rgba(255,255,255,0.07)" stroke-width="1"/>
+  <text x="78" y="72" font-size="9" fill="rgba(255,255,255,0.3)" letter-spacing="2">WYBIERZ MODEL</text>
+  <line x1="60" y1="82" x2="300" y2="82" stroke="rgba(255,255,255,0.07)" stroke-width="0.5"/>
 
   <!-- Model 1 - active -->
-  <rect x="120" y="76" width="240" height="80" fill="rgba(167,139,250,0.13)"/>
-  <text x="148" y="107" font-size="22">🐬</text>
-  <text x="180" y="103" font-size="13" font-weight="600" fill="rgba(255,255,255,0.92)">Dolphin PL (8B)</text>
-  <rect x="280" y="91" width="44" height="14" rx="4" fill="rgba(167,139,250,0.2)"/>
-  <text x="302" y="102" text-anchor="middle" font-size="8" fill="#a78bfa" letter-spacing="1">AKTYWNY</text>
-  <text x="180" y="120" font-size="11" fill="rgba(255,255,255,0.45)">Szybki - odpowiada w kilka sekund.</text>
-  <text x="180" y="135" font-size="11" fill="rgba(255,255,255,0.45)">Bez cenzury, bez ograniczeń, po polsku.</text>
+  <rect x="60" y="82" width="240" height="82" fill="rgba(167,139,250,0.12)"/>
+  <text x="78" y="114" font-size="20">🐬</text>
+  <text x="106" y="108" font-size="12" font-weight="700" fill="rgba(255,255,255,0.92)">Dolphin PL (8B)</text>
+  <rect x="218" y="96" width="42" height="14" rx="4" fill="rgba(167,139,250,0.25)"/>
+  <text x="239" y="107" text-anchor="middle" font-size="8" fill="#c4b5fd" letter-spacing="0.5">AKTYWNY</text>
+  <text x="106" y="124" font-size="10" fill="rgba(255,255,255,0.45)">Szybki - kilka sekund odpowiedzi.</text>
+  <text x="106" y="138" font-size="10" fill="rgba(255,255,255,0.45)">Bez cenzury, bez ograniczeń, po polsku.</text>
+  <!-- tags -->
+  <rect x="106" y="148" width="52" height="13" rx="3" fill="rgba(96,165,250,0.15)"/>
+  <text x="132" y="158" text-anchor="middle" font-size="8" fill="rgba(96,165,250,0.8)">bez cenzury</text>
+  <rect x="164" y="148" width="36" height="13" rx="3" fill="rgba(96,165,250,0.15)"/>
+  <text x="182" y="158" text-anchor="middle" font-size="8" fill="rgba(96,165,250,0.8)">szybki</text>
 
-  <!-- Tags -->
-  <rect x="180" y="142" width="52" height="15" rx="4" fill="rgba(96,165,250,0.15)"/>
-  <text x="206" y="153" text-anchor="middle" font-size="9" fill="rgba(96,165,250,0.8)">bez cenzury</text>
-  <rect x="238" y="142" width="38" height="15" rx="4" fill="rgba(96,165,250,0.15)"/>
-  <text x="257" y="153" text-anchor="middle" font-size="9" fill="rgba(96,165,250,0.8)">szybki</text>
-
-  <line x1="120" y1="160" x2="360" y2="160" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+  <line x1="60" y1="164" x2="300" y2="164" stroke="rgba(255,255,255,0.06)" stroke-width="0.5"/>
 
   <!-- Model 2 -->
-  <rect x="120" y="160" width="240" height="80" fill="transparent"/>
-  <text x="148" y="191" font-size="22">🧠</text>
-  <text x="180" y="187" font-size="13" font-weight="600" fill="rgba(255,255,255,0.92)">Qwen 2.5 Abliterated (14B)</text>
-  <text x="180" y="204" font-size="11" fill="rgba(255,255,255,0.45)">Najmądrzejszy - lepsze odpowiedzi,</text>
-  <text x="180" y="219" font-size="11" fill="rgba(255,255,255,0.45)">głębsza analiza. Wolniejszy.</text>
-
-  <!-- Tags -->
-  <rect x="180" y="226" width="52" height="15" rx="4" fill="rgba(167,139,250,0.15)"/>
-  <text x="206" y="237" text-anchor="middle" font-size="9" fill="rgba(167,139,250,0.8)">bez cenzury</text>
-  <rect x="238" y="226" width="64" height="15" rx="4" fill="rgba(167,139,250,0.15)"/>
-  <text x="270" y="237" text-anchor="middle" font-size="9" fill="rgba(167,139,250,0.8)">najmądrzejszy</text>
-
-  <!-- Trigger button hint -->
-  <rect x="176" y="272" width="128" height="28" rx="14" fill="rgba(167,139,250,0.1)" stroke="rgba(167,139,250,0.22)" stroke-width="0.5"/>
-  <circle cx="192" cy="286" r="4" fill="#4ade80"/>
-  <text x="201" y="290" font-size="11" font-weight="500" fill="rgba(255,255,255,0.85)">🐬 Dolphin PL ▾</text>
+  <text x="78" y="196" font-size="20">🧠</text>
+  <text x="106" y="190" font-size="12" font-weight="700" fill="rgba(255,255,255,0.85)">Qwen 2.5 Abliterated (14B)</text>
+  <text x="106" y="206" font-size="10" fill="rgba(255,255,255,0.4)">Najmądrzejszy - lepsza analiza.</text>
+  <text x="106" y="220" font-size="10" fill="rgba(255,255,255,0.4)">Wolniejszy, warto poczekać.</text>
+  <!-- tags -->
+  <rect x="106" y="230" width="52" height="13" rx="3" fill="rgba(167,139,250,0.15)"/>
+  <text x="132" y="240" text-anchor="middle" font-size="8" fill="rgba(167,139,250,0.8)">bez cenzury</text>
+  <rect x="164" y="230" width="62" height="13" rx="3" fill="rgba(167,139,250,0.15)"/>
+  <text x="195" y="240" text-anchor="middle" font-size="8" fill="rgba(167,139,250,0.8)">najmądrzejszy</text>
 </svg>
