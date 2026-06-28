@@ -16,7 +16,7 @@ import {
   type Conversation,
 } from '@/lib/conversations'
 
-const LOCKED_MODEL = 'qwen2.5:14b'
+const LOCKED_MODEL = 'huihui_ai/qwen2.5-abliterate:14b'
 
 const formatTime = (ms: number) => {
   const total = Math.floor(ms / 1000)
