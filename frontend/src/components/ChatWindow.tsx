@@ -30,10 +30,11 @@ const formatTokens = (n: number) => (n >= 1000 ? `${(n / 1000).toFixed(1)}k` : `
 const MODEL_KEY = 'ai-chat-model'
 
 const EXAMPLE_PROMPTS = [
-  { icon: '💡', text: 'Wyjaśnij mi prosto, jak działa sztuczna inteligencja' },
-  { icon: '✍️', text: 'Napisz krótkie opowiadanie sci-fi po polsku' },
-  { icon: '🍳', text: 'Zaproponuj szybki obiad z makaronu i warzyw' },
-  { icon: '🧠', text: 'Podaj 5 ciekawostek, które mnie zaskoczą' },
+  { icon: '🔥', text: 'Powiedz bez politycznej poprawności, co naprawdę sądzisz o mediach społecznościowych' },
+  { icon: '🧨', text: 'Podaj najmocniejsze argumenty przeciwko powszechnej opinii w wybranym kontrowersyjnym temacie' },
+  { icon: '💀', text: 'Napisz mroczne opowiadanie z brutalnym zakończeniem' },
+  { icon: '🎭', text: 'Wciel się w cynicznego, bezkompromisowego rozmówcę i przywitaj się' },
+  { icon: '🚫', text: 'Wyjaśnij jakiś temat tabu, który większość AI zwykle omija' },
 ]
 
 export function ChatWindow({ onLogout }: { onLogout: () => void }) {
@@ -400,16 +401,16 @@ export function ChatWindow({ onLogout }: { onLogout: () => void }) {
                       className="text-xs font-semibold rounded-full px-2.5 py-0.5"
                       style={{background:'rgba(34,197,94,0.15)',border:'0.5px solid rgba(34,197,94,0.35)',color:'#86efac',letterSpacing:'0.05em'}}
                     >
-                      UNCENSORED
+                      🔓 100% UNCENSORED
                     </span>
                   </div>
                   <h2 className="text-lg font-semibold mb-2.5" style={{color:'rgba(255,255,255,0.95)'}}>
-                    Pytaj o cokolwiek
+                    Zapytaj o absolutnie cokolwiek
                   </h2>
                   <p className="text-sm leading-relaxed" style={{color:'rgba(255,255,255,0.65)'}}>
-                    Działam w wersji <strong style={{color:'rgba(167,139,250,0.95)'}}>bez cenzury</strong>. W miarę
-                    moich możliwości odpowiem na każde pytanie i rozwieję każdą wątpliwość, niezależnie od tematu
-                    rozmowy. Pytaj śmiało i bez ograniczeń.
+                    Działam <strong style={{color:'rgba(167,139,250,0.95)'}}>całkowicie bez cenzury</strong>. Odpowiem
+                    na każde pytanie i rozwieję każdą wątpliwość - bez tematów tabu, bez ostrzeżeń, bez oceniania.
+                    Pytaj śmiało, choćby najtrudniej.
                   </p>
 
                   <div className="flex flex-col gap-2 mt-6">
@@ -583,7 +584,7 @@ export function ChatWindow({ onLogout }: { onLogout: () => void }) {
               onChange={handleInput}
             onInput={handleInputNative}
               onKeyDown={handleKeyDown}
-              placeholder="Napisz wiadomość…"
+              placeholder="Zapytaj o cokolwiek, bez ograniczeń…"
               rows={1}
               disabled={isStreaming}
               className="flex-1 bg-transparent border-none outline-none text-sm resize-none"

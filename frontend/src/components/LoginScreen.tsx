@@ -35,11 +35,18 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
         className="w-full max-w-sm mx-4"
       >
         <div className="text-center mb-8">
-          <div className="inline-flex items-center gap-2 mb-4">
-            <div style={{width:10,height:10,borderRadius:'50%',background:'linear-gradient(135deg,#a78bfa,#60a5fa)'}} />
-            <h1 className="text-2xl font-medium text-white tracking-tight">AI Chat</h1>
+          <div
+            className="inline-flex items-center gap-1.5 text-xs font-semibold rounded-full px-3 py-1 mb-4"
+            style={{background:'rgba(34,197,94,0.15)',border:'0.5px solid rgba(34,197,94,0.35)',color:'#86efac',letterSpacing:'0.06em'}}
+          >
+            🔓 100% UNCENSORED
           </div>
-          <p style={{color:'rgba(255,255,255,0.4)'}} className="text-sm">Wprowadź hasło dostępu</p>
+          <h1 className="text-2xl font-semibold text-white tracking-tight mb-1.5">Czat bez Cenzury</h1>
+          <p style={{color:'rgba(255,255,255,0.55)'}} className="text-sm leading-relaxed">
+            Odpowiedź na <strong style={{color:'rgba(167,139,250,0.95)'}}>absolutnie każde</strong> pytanie.<br />
+            Bez tematów tabu, bez ograniczeń, bez owijania w bawełnę.
+          </p>
+          <p style={{color:'rgba(255,255,255,0.3)'}} className="text-xs mt-4">Wprowadź hasło dostępu</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">

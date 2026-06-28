@@ -66,10 +66,13 @@ export function Sidebar({ isOpen, onClose, conversations, activeId, onSelect, on
         }}
       >
         <div style={{padding:'16px 14px 12px',borderBottom:'0.5px solid rgba(255,255,255,0.06)'}}>
-          <div className="flex items-center gap-2 mb-3">
-            <div style={{width:8,height:8,borderRadius:'50%',background:'linear-gradient(135deg,#a78bfa,#60a5fa)'}} />
-            <span className="text-sm font-medium" style={{color:'rgba(255,255,255,0.9)'}}>AI Chat</span>
+          <div className="flex items-center gap-2 mb-1">
+            <span style={{fontSize:14}}>🔓</span>
+            <span className="text-sm font-semibold" style={{color:'rgba(255,255,255,0.92)'}}>Czat bez Cenzury</span>
           </div>
+          <p className="mb-3" style={{fontSize:10,color:'rgba(134,239,172,0.8)',letterSpacing:'0.03em'}}>
+            Odpowiedź na każde pytanie
+          </p>
           <button
             onClick={onNew}
             className="w-full flex items-center gap-2 text-xs rounded-lg px-3 py-2 transition-colors"
