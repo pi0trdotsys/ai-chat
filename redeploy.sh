@@ -6,6 +6,18 @@
 set -euo pipefail
 cd "$(dirname "$0")"
 
+# ── synchronizacja kodu ──────────────────────────
+# git pull może podmienić ten skrypt w locie, więc po pobraniu
+# re-exec'ujemy świeżą wersję (BF_REEXEC chroni przed pętlą).
+if [ "${BF_REEXEC:-}" != 1 ] && [ "${BF_NOPULL:-}" != 1 ]; then
+  printf "\n  \033[38;5;51m⟳\033[0m  synchronizacja kodu (git pull)…\n"
+  if ! git pull --ff-only; then
+    printf "  \033[38;5;203m✗\033[0m  git pull nieudany - rozwiąż ręcznie i ponów.\n"
+    exit 1
+  fi
+  exec env BF_REEXEC=1 bash "$0" "$@"
+fi
+
 # ── paleta ───────────────────────────────────────
 if [ -t 1 ]; then
   R=$'\033[0m'; DIM=$'\033[2m'; B=$'\033[1m'

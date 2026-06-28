@@ -129,37 +129,26 @@ export function MessageBubble({ message, isStreaming, isLast, onRegenerate, onEd
           ) : (
             <>
               <Markdown content={message.content} />
-              {message.stats && (
-                <div
-                  className="flex items-center gap-2.5 mt-2 pt-1.5 flex-wrap"
-                  style={{ borderTop: '0.5px solid rgba(255,255,255,0.06)', fontSize: 10, color: 'rgba(255,255,255,0.4)' }}
-                >
-                  <span title="Ile fragmentów tekstu model wziął pod uwagę (Twoje pytanie i wcześniejsza rozmowa). Fragment to ok. 3-4 znaki.">
-                    📖 przeczytał {message.stats.promptTok}
-                  </span>
-                  <span title="Ile fragmentów tekstu model napisał w tej odpowiedzi.">
-                    ✍️ napisał {message.stats.genTok}
-                  </span>
-                  <span title="Jak szybko pisał - fragmentów na sekundę.">
-                    ⚡ {message.stats.tps.toString().replace('.', ',')}/s
-                  </span>
-                  {message.stats.responseTimeMs != null && (
-                    <span title="Ile trwało wygenerowanie tej odpowiedzi.">
-                      ⏱ {(message.stats.responseTimeMs / 1000).toFixed(0)}s
+              {message.stats && (() => {
+                const s = message.stats
+                const parts = [
+                  `${s.promptTok} → ${s.genTok} tok`,
+                  `${s.tps.toString().replace('.', ',')} tok/s`,
+                ]
+                if (s.responseTimeMs != null) parts.push(`${(s.responseTimeMs / 1000).toFixed(0)} s`)
+                if (s.energyKWh != null) parts.push(`${(s.energyKWh * 1000).toFixed(2)} Wh`)
+                if (s.waterL != null) parts.push(`${(s.waterL * 1000).toFixed(1)} ml`)
+                return (
+                  <div className="mt-2 pt-1.5" style={{ borderTop: '0.5px solid rgba(255,255,255,0.06)' }}>
+                    <span
+                      style={{ fontSize: 10, color: 'rgba(255,255,255,0.32)', letterSpacing: '0.01em' }}
+                      title="tokeny wejściowe → wygenerowane · tempo · czas · energia · woda (orientacyjnie)"
+                    >
+                      {parts.join('   ·   ')}
                     </span>
-                  )}
-                  {message.stats.energyKWh != null && (
-                    <span title="Orientacyjne zużycie energii na tę odpowiedź (cały mini-PC).">
-                      🔋 {(message.stats.energyKWh * 1000).toFixed(2)} Wh
-                    </span>
-                  )}
-                  {message.stats.waterL != null && (
-                    <span title="Orientacyjny ślad wodny energii zużytej na tę odpowiedź.">
-                      💧 {(message.stats.waterL * 1000).toFixed(1)} ml
-                    </span>
-                  )}
-                </div>
-              )}
+                  </div>
+                )
+              })()}
             </>
           )}
         </div>

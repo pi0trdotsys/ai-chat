@@ -299,12 +299,12 @@ export function ChatWindow({ onLogout }: { onLogout: () => void }) {
             </button>
             <button
               onClick={() => setPaletteOpen(true)}
-              className="hidden md:flex items-center gap-1.5 rounded-lg px-2 h-[30px]"
-              style={{color:'rgba(255,255,255,0.45)',border:'0.5px solid rgba(255,255,255,0.1)',fontSize:11}}
-              title="Paleta poleceń (Cmd/Ctrl+K)"
+              className="hidden md:flex items-center gap-1.5 rounded-lg px-2.5 h-[30px]"
+              style={{color:'rgba(255,255,255,0.4)',border:'0.5px solid rgba(255,255,255,0.1)',fontSize:11}}
+              title="Szukaj / polecenia (Cmd/Ctrl+K)"
             >
-              <span>🔍</span>
-              <kbd style={{fontSize:10,opacity:0.7}}>⌘K</kbd>
+              <span>Szukaj</span>
+              <kbd style={{fontSize:10,opacity:0.6}}>⌘K</kbd>
             </button>
           </div>
 
@@ -322,10 +322,10 @@ export function ChatWindow({ onLogout }: { onLogout: () => void }) {
             {sessionTokens > 0 && (
               <span
                 className="hidden sm:inline text-xs"
-                style={{color:'rgba(255,255,255,0.4)',fontFamily:'ui-monospace,monospace'}}
-                title={`Zużycie w tej sesji - ${formatTokens(sessionTokens)} fragmentów tekstu, ${(sessionEnergyKWh * 1000).toFixed(1)} Wh energii, ${(sessionWaterL * 1000).toFixed(0)} ml wody (orientacyjnie).`}
+                style={{color:'rgba(255,255,255,0.35)',fontFamily:'ui-monospace,monospace'}}
+                title={`Zużycie w tej sesji - ${formatTokens(sessionTokens)} tokenów, ${(sessionEnergyKWh * 1000).toFixed(1)} Wh energii, ${(sessionWaterL * 1000).toFixed(0)} ml wody (orientacyjnie).`}
               >
-                {formatTokens(sessionTokens)} fragm. · 🔋 {(sessionEnergyKWh * 1000).toFixed(1)} Wh · 💧 {(sessionWaterL * 1000).toFixed(0)} ml
+                {formatTokens(sessionTokens)} tok
               </span>
             )}
             <button
@@ -334,7 +334,7 @@ export function ChatWindow({ onLogout }: { onLogout: () => void }) {
               style={{color: activeConv?.systemPrompt ? 'rgba(167,139,250,0.9)' : 'rgba(255,255,255,0.3)'}}
               title="Ustaw personę / własne instrukcje dla tej rozmowy"
             >
-              🎭 Persona{activeConv?.systemPrompt ? ' •' : ''}
+              Persona{activeConv?.systemPrompt ? ' •' : ''}
             </button>
             <button onClick={clearMessages} className="text-xs" style={{color:'rgba(255,255,255,0.3)'}}>
               Wyczyść
@@ -415,26 +415,19 @@ export function ChatWindow({ onLogout }: { onLogout: () => void }) {
                     bez cenzury · bez tematów tabu
                   </p>
 
-                  <div className="flex flex-col gap-2 mt-6">
+                  <div className="flex flex-col gap-1.5 mt-7">
                     {EXAMPLE_PROMPTS.map((p, idx) => (
                       <motion.button
                         key={p.text}
                         onClick={() => handleExample(p.text)}
-                        initial={{ opacity: 0, y: 8 }}
+                        initial={{ opacity: 0, y: 6 }}
                         animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.15 + idx * 0.07 }}
-                        whileHover={{ scale: 1.02, backgroundColor: 'rgba(167,139,250,0.14)' }}
-                        whileTap={{ scale: 0.98 }}
-                        className="flex items-center gap-2.5 text-left text-sm rounded-xl px-3.5 py-2.5"
-                        style={{
-                          background:'rgba(255,255,255,0.05)',
-                          border:'0.5px solid rgba(255,255,255,0.1)',
-                          color:'rgba(255,255,255,0.8)',
-                        }}
+                        transition={{ delay: 0.15 + idx * 0.06 }}
+                        whileHover={{ x: 3, color: 'rgba(255,255,255,0.95)' }}
+                        className="text-left text-sm rounded-lg px-3 py-2"
+                        style={{ color: 'rgba(255,255,255,0.55)' }}
                       >
-                        <span style={{fontSize:16}}>{p.icon}</span>
-                        <span className="flex-1">{p.text}</span>
-                        <span style={{color:'rgba(167,139,250,0.6)',fontSize:13}}>→</span>
+                        {p.text}
                       </motion.button>
                     ))}
                   </div>
