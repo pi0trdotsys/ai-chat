@@ -70,10 +70,41 @@ const buildSummary = (s: ChatStats): string => {
 }
 
 const CONVO_LOG = process.env.CONVO_LOG || '/app/logs/conversations.jsonl'
-const logConversation = async (record: object) => {
+const READABLE_LOG = CONVO_LOG.replace(/\.jsonl$/, '.log')
+
+interface ConvoRecord {
+  ts: string
+  ip?: string
+  model: string
+  question: string
+  answer: string
+  stats?: { promptTok: number; genTok: number; tps: number }
+  footprint?: { responseTimeMs: number; energyKWh: number; waterL: number; powerWatts: number }
+  summary?: string
+  error?: string
+}
+
+// Czytelny, wieloliniowy zapis jednej rozmowy (dla człowieka)
+const formatReadable = (r: ConvoRecord): string => {
+  const date = r.ts.replace('T', ' ').replace(/\..*$/, '')
+  const head = `🕒 ${date}   📦 ${r.model}   🌐 ${r.ip ?? '-'}`
+  const answer = r.answer || (r.error ? `[BŁĄD: ${r.error}]` : '')
+  let foot = ''
+  if (r.stats) {
+    const parts = [`${r.stats.promptTok}→${r.stats.genTok} tok`, `${r.stats.tps} tok/s`]
+    if (r.footprint) parts.push(`${Math.round(r.footprint.responseTimeMs / 1000)}s`)
+    foot = `\n\n📊 ${parts.join(' · ')}`
+  }
+  return `${'═'.repeat(60)}\n${head}\n\n❓ ${r.question}\n\n💬 ${answer}${foot}\n\n`
+}
+
+const logConversation = async (record: ConvoRecord) => {
   try {
     await mkdir(dirname(CONVO_LOG), { recursive: true })
+    // JSONL - źródło prawdy dla narzędzi i filtrowania
     await appendFile(CONVO_LOG, JSON.stringify(record) + '\n')
+    // .log - czytelna wersja dla człowieka
+    await appendFile(READABLE_LOG, formatReadable(record))
   } catch (err) {
     log(`✗ Nie udało się zapisać rozmowy: ${err instanceof Error ? err.message : String(err)}`)
   }
