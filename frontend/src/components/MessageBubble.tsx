@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { motion } from 'framer-motion'
 import type { Message } from '@/types/chat'
 import { Markdown } from './Markdown'
+import { ThinkingBars } from './ThinkingIndicator'
 
 interface MessageBubbleProps {
   message: Message
@@ -114,15 +115,8 @@ export function MessageBubble({ message, isStreaming, isLast, onRegenerate, onEd
               </div>
             </div>
           ) : isStreaming && !message.content ? (
-            <span className="flex gap-1 items-center py-0.5">
-              {[0,1,2].map(i => (
-                <motion.span
-                  key={i}
-                  animate={{ opacity: [0.3,1,0.3], scale: [0.8,1,0.8] }}
-                  transition={{ duration: 1.2, repeat: Infinity, delay: i * 0.2 }}
-                  style={{ display:'inline-block', width:6, height:6, borderRadius:'50%', background:'rgba(167,139,250,0.7)' }}
-                />
-              ))}
+            <span className="flex items-center py-0.5">
+              <ThinkingBars />
             </span>
           ) : isUser ? (
             <p className="whitespace-pre-wrap break-words">{message.content}</p>

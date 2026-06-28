@@ -14,11 +14,21 @@ SVC=(ollama backend frontend)
 # git pull może podmienić ten skrypt w locie, więc po pobraniu
 # re-exec'ujemy świeżą wersję (BF_REEXEC chroni przed pętlą).
 if [ "${BF_REEXEC:-}" != 1 ] && [ "${BF_NOPULL:-}" != 1 ]; then
-  printf "\n  \033[38;5;51m⟳\033[0m  synchronizacja kodu (git pull)…\n"
-  if ! git pull --ff-only; then
-    printf "  \033[38;5;203m✗\033[0m  git pull nieudany - rozwiąż ręcznie i ponów.\n"
-    exit 1
+  C=$'\033[38;5;51m'; X=$'\033[38;5;203m'; Z=$'\033[0m'; D=$'\033[2m'
+  printf "\n  ${C}⟳${Z}  synchronizacja kodu…\n"
+  BR=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo main)
+  if ! git fetch origin "$BR" >/dev/null 2>&1; then
+    printf "  ${X}✗${Z}  git fetch nieudany - sprawdź sieć/repozytorium.\n"; exit 1
   fi
+  # Lokalne zmiany w śledzonych plikach (np. po ręcznych edycjach na serwerze)
+  # chowamy do stash jako backup, a drzewo twardo równamy do origin - deploy
+  # zawsze ląduje czysto i nigdy nie blokuje się na konflikcie.
+  if ! git diff --quiet || ! git diff --cached --quiet; then
+    printf "  ${D}  wykryto lokalne zmiany - chowam do stash (backup)…${Z}\n"
+    git stash push -u -m "redeploy-autostash-$(date +%F_%H-%M-%S)" >/dev/null 2>&1 || true
+  fi
+  git reset --hard "origin/$BR" >/dev/null
+  printf "  ${C}⟳${Z}  kod zrównany z origin/${BR}\n"
   exec env BF_REEXEC=1 bash "$0" "$@"
 fi
 

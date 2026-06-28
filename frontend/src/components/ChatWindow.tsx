@@ -7,6 +7,7 @@ import { Sidebar } from './Sidebar'
 import { PersonaPanel } from './PersonaPanel'
 import { CommandPalette } from './CommandPalette'
 import { useCompletionNotify } from '@/hooks/useCompletionNotify'
+import { ThinkingBars } from './ThinkingIndicator'
 import {
   loadConversations,
   saveConversations,
@@ -25,6 +26,28 @@ const formatTime = (ms: number) => {
 }
 
 const formatTokens = (n: number) => (n >= 1000 ? `${(n / 1000).toFixed(1)}k` : `${n}`)
+
+// Polska odmiana słowa "token"
+const plTokens = (n: number) => {
+  if (n === 1) return 'token'
+  const d = n % 10, h = n % 100
+  return d >= 2 && d <= 4 && !(h >= 12 && h <= 14) ? 'tokeny' : 'tokenów'
+}
+
+// Komunikaty statusu (eskalują z czasem, jak u Claude'a, ale po polsku)
+const THINKING_STEPS: { t: number; msg: string }[] = [
+  { t: 6, msg: 'Zbieram myśli…' },
+  { t: 18, msg: 'Analizuję pytanie…' },
+  { t: 45, msg: 'Składam odpowiedź…' },
+  { t: 90, msg: 'Wciąż myślę, to złożony temat…' },
+  { t: 180, msg: 'Już prawie gotowe…' },
+]
+const thinkingStatus = (elapsedMs: number, writing: boolean) => {
+  if (writing) return 'Piszę odpowiedź…'
+  const s = elapsedMs / 1000
+  for (const step of THINKING_STEPS) if (s < step.t) return step.msg
+  return 'Dopinam ostatnie szczegóły…'
+}
 
 const EXAMPLE_PROMPTS = [
   { icon: '🔥', text: 'Powiedz bez politycznej poprawności, co naprawdę sądzisz o mediach społecznościowych' },
@@ -421,29 +444,41 @@ export function ChatWindow({ onLogout }: { onLogout: () => void }) {
           {isStreaming && (
             <motion.div
               initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}
-              className="flex flex-col items-center gap-1 py-1"
+              className="flex flex-col items-center gap-1.5 py-1"
             >
               <div
-                className="flex items-center gap-2 text-xs rounded-full px-3.5 py-1.5"
-                style={{background:'rgba(167,139,250,0.1)',border:'0.5px solid rgba(167,139,250,0.22)',color:'rgba(255,255,255,0.75)'}}
+                className="flex items-center gap-2.5 text-xs rounded-full pl-3 pr-3.5 py-2"
+                style={{background:'rgba(167,139,250,0.1)',border:'0.5px solid rgba(167,139,250,0.22)',color:'rgba(255,255,255,0.8)'}}
               >
-                <motion.span
-                  animate={{ rotate: 360 }}
-                  transition={{ duration: 1.2, repeat: Infinity, ease: 'linear' }}
-                  style={{display:'inline-block',width:11,height:11,borderRadius:'50%',border:'1.5px solid rgba(167,139,250,0.3)',borderTopColor:'rgba(167,139,250,0.95)'}}
-                />
-                <span style={{fontFamily:'ui-monospace,monospace',fontVariantNumeric:'tabular-nums'}}>
-                  ⏱️ {formatTime(elapsedMs)}
+                <ThinkingBars height={13} />
+                <AnimatePresence mode="wait">
+                  <motion.span
+                    key={thinkingStatus(elapsedMs, liveTokens > 0)}
+                    initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }}
+                    transition={{ duration: 0.25 }}
+                    style={{ fontWeight: 500 }}
+                  >
+                    {thinkingStatus(elapsedMs, liveTokens > 0)}
+                  </motion.span>
+                </AnimatePresence>
+                <span style={{color:'rgba(255,255,255,0.25)'}}>·</span>
+                <span style={{fontFamily:'ui-monospace,monospace',fontVariantNumeric:'tabular-nums',color:'rgba(255,255,255,0.55)'}}>
+                  {formatTime(elapsedMs)}
                 </span>
-                {estimateMs > 0 && (
-                  <span style={{color:'rgba(255,255,255,0.4)'}}>· szac. ~{formatTime(estimateMs)}</span>
-                )}
                 {liveTokens > 0 && (
-                  <span style={{color:'rgba(255,255,255,0.4)'}}>· ≈ {liveTokens} tok</span>
+                  <>
+                    <span style={{color:'rgba(255,255,255,0.25)'}}>·</span>
+                    <span style={{fontVariantNumeric:'tabular-nums'}}>
+                      <span style={{fontWeight:600,color:'rgba(167,139,250,0.95)'}}>{liveTokens}</span>{' '}
+                      <span style={{color:'rgba(255,255,255,0.5)'}}>{plTokens(liveTokens)}</span>
+                    </span>
+                  </>
                 )}
               </div>
               <p style={{fontSize:10,color:'rgba(255,255,255,0.28)'}}>
-                Trudniejsze pytania mogą potrwać dłużej - odpowiedź na pewno przyjdzie.
+                {estimateMs > 0
+                  ? `Zwykle zajmuje ~${formatTime(estimateMs)} · odpowiedź na pewno przyjdzie`
+                  : 'Trudniejsze pytania mogą potrwać dłużej - odpowiedź na pewno przyjdzie'}
               </p>
             </motion.div>
           )}
