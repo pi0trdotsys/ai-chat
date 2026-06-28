@@ -19,7 +19,7 @@ const RULES: ModelRule[] = [
     match: 'dolphin-pl',
     meta: {
       label: 'Dolphin PL (8B)',
-      desc: 'Szybki, bez cenzury, zoptymalizowany pod polskie odpowiedzi. Bez cyrylicy, bez halucynacji.',
+      desc: 'Szybki - odpowiada w kilka sekund. Bez cenzury, bez ograniczeń, po polsku.',
       tags: ['bez cenzury', 'po polsku', 'szybki'],
       greeting: 'Cześć! Dolphin PL - szybki, bez hamulców i zawsze po polsku. Pytaj o cokolwiek.',
       emoji: '🐬',
@@ -39,7 +39,7 @@ const RULES: ModelRule[] = [
     match: 'huihui_ai/qwen2.5-abliterate',
     meta: {
       label: 'Qwen 2.5 Abliterated (14B)',
-      desc: 'Największy i najbystrzejszy tutaj. Najlepsze rozumowanie i wiedza, bez cenzury. Wolniejszy, polski dobry (choć nie najlepszy).',
+      desc: 'Najmądrzejszy - lepsze odpowiedzi, głębsza analiza. Wolniejszy, warto poczekać.',
       tags: ['bez cenzury', 'najmądrzejszy', 'wolniejszy'],
       greeting: 'Cześć! Jestem największym i najbystrzejszym modelem tutaj. Rzucaj trudnymi pytaniami - poradzę sobie.',
       emoji: '🧠',

@@ -92,6 +92,7 @@ export function ChatWindow({ onLogout }: { onLogout: () => void }) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(() => localStorage.getItem('ai-chat-sidebar-collapsed') === '1')
   const [paletteOpen, setPaletteOpen] = useState(false)
+  const [modelPickerOpen, setModelPickerOpen] = useState(false)
   const [atBottom, setAtBottom] = useState(true)
 
   const toggleSidebar = () => {
@@ -320,18 +321,65 @@ export function ChatWindow({ onLogout }: { onLogout: () => void }) {
             </button>
           </div>
 
-          {/* Zablokowany model - tylko informacja, bez możliwości zmiany */}
-          <div
-            className="flex items-center gap-2 text-xs rounded-full pl-3 pr-3 py-1.5"
-            style={{background:'rgba(167,139,250,0.1)',border:'0.5px solid rgba(167,139,250,0.22)',color:'rgba(255,255,255,0.85)'}}
-          >
-            <motion.span
-              animate={health.status === 'checking' ? { opacity: [0.4,1,0.4] } : { opacity: 1 }}
-              transition={{ duration: 1.2, repeat: health.status === 'checking' ? Infinity : 0 }}
-              style={{display:'inline-block',width:7,height:7,borderRadius:'50%',background:statusColor,boxShadow:`0 0 6px ${statusColor}`}}
-            />
-            <span style={{fontWeight:500,whiteSpace:'nowrap'}}>{describeModel(selectedModel).emoji} {describeModel(selectedModel).label}</span>
-            <span className="hidden sm:inline" style={{fontSize:9,letterSpacing:'0.12em',color:'rgba(255,255,255,0.35)',textTransform:'uppercase'}}>bez filtra</span>
+          {/* Picker modelu */}
+          <div className="relative">
+            <button
+              onClick={() => setModelPickerOpen(o => !o)}
+              className="flex items-center gap-2 text-xs rounded-full pl-3 pr-2.5 py-1.5"
+              style={{background:'rgba(167,139,250,0.1)',border:'0.5px solid rgba(167,139,250,0.22)',color:'rgba(255,255,255,0.85)'}}
+            >
+              <motion.span
+                animate={health.status === 'checking' ? { opacity: [0.4,1,0.4] } : { opacity: 1 }}
+                transition={{ duration: 1.2, repeat: health.status === 'checking' ? Infinity : 0 }}
+                style={{display:'inline-block',width:7,height:7,borderRadius:'50%',background:statusColor,boxShadow:`0 0 6px ${statusColor}`,flexShrink:0}}
+              />
+              <span style={{fontWeight:500,whiteSpace:'nowrap'}}>{describeModel(selectedModel).emoji} {describeModel(selectedModel).label}</span>
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{opacity:0.5,flexShrink:0}}>
+                <polyline points="6 9 12 15 18 9"/>
+              </svg>
+            </button>
+            <AnimatePresence>
+              {modelPickerOpen && (
+                <>
+                  <div className="fixed inset-0 z-30" onClick={() => setModelPickerOpen(false)} />
+                  <motion.div
+                    initial={{opacity:0,y:-6,scale:0.97}} animate={{opacity:1,y:0,scale:1}} exit={{opacity:0,y:-6,scale:0.97}}
+                    transition={{type:'spring',stiffness:340,damping:28}}
+                    className="absolute left-1/2 z-40 mt-2 rounded-2xl overflow-hidden"
+                    style={{
+                      top:'100%', transform:'translateX(-50%)', minWidth:260,
+                      background:'rgba(22,19,46,0.97)', backdropFilter:'blur(24px)',
+                      border:'0.5px solid rgba(167,139,250,0.25)', boxShadow:'0 16px 48px rgba(0,0,0,0.55)',
+                    }}
+                  >
+                    <div className="px-4 pt-3 pb-2" style={{borderBottom:'0.5px solid rgba(255,255,255,0.07)'}}>
+                      <p style={{fontSize:10,letterSpacing:'0.14em',textTransform:'uppercase',color:'rgba(255,255,255,0.3)'}}>Wybierz model</p>
+                    </div>
+                    {ALLOWED_MODELS.map(name => {
+                      const m = describeModel(name)
+                      const active = name === selectedModel
+                      return (
+                        <button
+                          key={name}
+                          onClick={() => { handleSelectModel(name); setModelPickerOpen(false) }}
+                          className="w-full flex items-start gap-3 px-4 py-3 text-left"
+                          style={{background: active ? 'rgba(167,139,250,0.13)' : 'transparent', borderBottom:'0.5px solid rgba(255,255,255,0.05)'}}
+                        >
+                          <span style={{fontSize:20,lineHeight:1,marginTop:2}}>{m.emoji}</span>
+                          <span className="flex-1 min-w-0">
+                            <span className="flex items-center gap-2">
+                              <span style={{fontSize:13,fontWeight:600,color:'rgba(255,255,255,0.92)'}}>{m.label}</span>
+                              {active && <span style={{fontSize:9,letterSpacing:'0.12em',textTransform:'uppercase',color:'#a78bfa',background:'rgba(167,139,250,0.15)',borderRadius:4,padding:'1px 5px'}}>aktywny</span>}
+                            </span>
+                            <span style={{fontSize:12,color:'rgba(255,255,255,0.45)',lineHeight:1.4,display:'block',marginTop:2}}>{m.desc}</span>
+                          </span>
+                        </button>
+                      )
+                    })}
+                  </motion.div>
+                </>
+              )}
+            </AnimatePresence>
           </div>
 
           <div className="flex items-center gap-3">
