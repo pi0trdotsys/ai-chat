@@ -15,6 +15,16 @@ const app = express()
 const ollama = new Ollama({ host: process.env.OLLAMA_URL || 'http://localhost:11434' })
 const DEFAULT_MODEL = process.env.DEFAULT_MODEL || 'dolphin3:8b'
 
+// Opcje generowania per model - balans między jakością a szybkością
+function modelOptions(model: string): Record<string, unknown> {
+  const base = { temperature: 0.7, repeat_penalty: 1.1, num_ctx: 2048 }
+  // Qwen 14B: mniejszy kontekst = więcej VRAM wolnego na warstwy GPU
+  if (model.includes('qwen')) return { ...base, num_ctx: 2048 }
+  // Dolphin 8B: mieści się prawie w całości w VRAM, można dać większy kontekst
+  if (model.includes('dolphin')) return { ...base, num_ctx: 3072 }
+  return base
+}
+
 // Szacunkowe zużycie zasobów (konfigurowalne przez env)
 const POWER_WATTS = Number(process.env.POWER_WATTS) || 65 // pobór całego mini-PC pod obciążeniem CPU
 const WATER_L_PER_KWH = Number(process.env.WATER_L_PER_KWH) || 1.8 // orientacyjny ślad wodny energii elektrycznej
@@ -201,7 +211,7 @@ app.post('/api/chat', requireAuth, async (req, res) => {
   const started = Date.now()
   let answer = ''
   try {
-    const stream = await ollama.chat({ model, messages: messagesWithSystem, stream: true })
+    const stream = await ollama.chat({ model, messages: messagesWithSystem, stream: true, options: modelOptions(model) })
     for await (const chunk of stream) {
       const content = chunk.message.content
       if (content) {

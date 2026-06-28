@@ -6,7 +6,7 @@ services:
       - ollama_data:/root/.ollama
     environment:
       - OLLAMA_FLASH_ATTENTION=1      # szybsza uwaga, mniejsze zużycie pamięci
-      - OLLAMA_KV_CACHE_TYPE=q8_0     # mniejszy cache KV = większy kontekst się zmieści
+      - OLLAMA_KV_CACHE_TYPE=q4_0     # mały cache KV = więcej VRAM na warstwy modelu = szybciej
       - OLLAMA_KEEP_ALIVE=-1          # trzymaj model w RAM, bez przeładowań między pytaniami
       - OLLAMA_NUM_PARALLEL=1         # cały (wolny) CPU na jedno zapytanie naraz
     restart: unless-stopped
