@@ -6,7 +6,7 @@ import { playBeep } from '@/lib/notify'
 export function useCompletionNotify(isStreaming: boolean) {
   const prev = useRef(isStreaming)
   const flashRef = useRef<number | null>(null)
-  const baseTitle = useRef<string>('AI Chat')
+  const baseTitle = useRef<string>('Bez Filtra')
 
   // Zatrzymaj miganie po powrocie na kartę (montowane raz)
   useEffect(() => {

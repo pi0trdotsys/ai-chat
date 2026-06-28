@@ -70,7 +70,7 @@ export function MessageBubble({ message, isStreaming, isLast, onRegenerate, onEd
           color: isUser ? 'rgba(255,255,255,0.7)' : 'rgba(167,139,250,0.9)',
         }}
       >
-        {isUser ? 'P' : '🐬'}
+        {isUser ? '👤' : '🐬'}
       </div>
 
       <div className={`flex flex-col gap-1 max-w-[78%] ${isUser ? 'items-end' : 'items-start'}`}>

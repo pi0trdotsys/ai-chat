@@ -66,13 +66,18 @@ export function Sidebar({ isOpen, onClose, conversations, activeId, onSelect, on
         }}
       >
         <div style={{padding:'16px 14px 12px',borderBottom:'0.5px solid rgba(255,255,255,0.06)'}}>
-          <div className="flex items-center gap-2 mb-1">
-            <span style={{fontSize:14}}>🔓</span>
-            <span className="text-sm font-semibold" style={{color:'rgba(255,255,255,0.92)'}}>Czat bez Cenzury</span>
+          <div className="flex items-center gap-2 mb-3">
+            <div
+              className="flex items-center justify-center"
+              style={{width:22,height:22,borderRadius:7,background:'linear-gradient(135deg,#a78bfa,#60a5fa)'}}
+            >
+              <div style={{width:7,height:7,borderRadius:2.5,background:'#0f0c29'}} />
+            </div>
+            <span className="text-sm tracking-tight">
+              <span style={{color:'rgba(255,255,255,0.92)',fontWeight:600}}>Bez</span>
+              <span style={{color:'rgba(167,139,250,0.95)',fontWeight:600}}> Filtra</span>
+            </span>
           </div>
-          <p className="mb-3" style={{fontSize:10,color:'rgba(134,239,172,0.8)',letterSpacing:'0.03em'}}>
-            Odpowiedź na każde pytanie
-          </p>
           <button
             onClick={onNew}
             className="w-full flex items-center gap-2 text-xs rounded-lg px-3 py-2 transition-colors"

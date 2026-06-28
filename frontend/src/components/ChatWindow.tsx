@@ -390,27 +390,29 @@ export function ChatWindow({ onLogout }: { onLogout: () => void }) {
                   }}
                 >
                   <motion.div
-                    animate={{ y: [0, -6, 0] }}
-                    transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
-                    style={{fontSize:44,lineHeight:1,marginBottom:14}}
+                    animate={{ y: [0, -5, 0] }}
+                    transition={{ duration: 3.5, repeat: Infinity, ease: 'easeInOut' }}
+                    className="inline-flex items-center justify-center mb-5"
+                    style={{
+                      width: 48, height: 48, borderRadius: 15,
+                      background: 'linear-gradient(135deg,#a78bfa,#60a5fa)',
+                      boxShadow: '0 10px 32px rgba(120,80,255,0.3)',
+                    }}
                   >
-                    🐬
+                    <div style={{ width: 17, height: 17, borderRadius: 6, background: '#181430' }} />
                   </motion.div>
-                  <div className="flex items-center justify-center gap-2 mb-3">
-                    <span
-                      className="text-xs font-semibold rounded-full px-2.5 py-0.5"
-                      style={{background:'rgba(34,197,94,0.15)',border:'0.5px solid rgba(34,197,94,0.35)',color:'#86efac',letterSpacing:'0.05em'}}
-                    >
-                      🔓 100% UNCENSORED
-                    </span>
-                  </div>
-                  <h2 className="text-lg font-semibold mb-2.5" style={{color:'rgba(255,255,255,0.95)'}}>
-                    Zapytaj o absolutnie cokolwiek
+                  <h2 className="text-xl tracking-tight mb-2.5" style={{ fontWeight: 600 }}>
+                    <span style={{ color: 'rgba(255,255,255,0.95)' }}>Bez</span>{' '}
+                    <span style={{
+                      background: 'linear-gradient(135deg,#a78bfa,#60a5fa)',
+                      WebkitBackgroundClip: 'text', backgroundClip: 'text', WebkitTextFillColor: 'transparent',
+                    }}>Filtra</span>
                   </h2>
-                  <p className="text-sm leading-relaxed" style={{color:'rgba(255,255,255,0.65)'}}>
-                    Działam <strong style={{color:'rgba(167,139,250,0.95)'}}>całkowicie bez cenzury</strong>. Odpowiem
-                    na każde pytanie i rozwieję każdą wątpliwość - bez tematów tabu, bez ostrzeżeń, bez oceniania.
-                    Pytaj śmiało, choćby najtrudniej.
+                  <p className="text-sm leading-relaxed mx-auto" style={{ color: 'rgba(255,255,255,0.6)', maxWidth: 340 }}>
+                    Odpowiem na każde pytanie i rozwieję każdą wątpliwość - bez tematów tabu, bez ostrzeżeń, bez oceniania.
+                  </p>
+                  <p className="mt-4" style={{ fontSize: 10, letterSpacing: '0.22em', color: 'rgba(255,255,255,0.25)', textTransform: 'uppercase' }}>
+                    bez cenzury · bez tematów tabu
                   </p>
 
                   <div className="flex flex-col gap-2 mt-6">

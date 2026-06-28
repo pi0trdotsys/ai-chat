@@ -34,19 +34,33 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
         transition={{ duration: 0.4, ease: 'easeOut' }}
         className="w-full max-w-sm mx-4"
       >
-        <div className="text-center mb-8">
+        <div className="text-center mb-9">
           <div
-            className="inline-flex items-center gap-1.5 text-xs font-semibold rounded-full px-3 py-1 mb-4"
-            style={{background:'rgba(34,197,94,0.15)',border:'0.5px solid rgba(34,197,94,0.35)',color:'#86efac',letterSpacing:'0.06em'}}
+            className="inline-flex items-center justify-center mb-5"
+            style={{
+              width: 46, height: 46, borderRadius: 14,
+              background: 'linear-gradient(135deg,#a78bfa,#60a5fa)',
+              boxShadow: '0 8px 28px rgba(120,80,255,0.35)',
+            }}
           >
-            🔓 100% UNCENSORED
+            <div style={{ width: 16, height: 16, borderRadius: 5, background: '#0f0c29' }} />
           </div>
-          <h1 className="text-2xl font-semibold text-white tracking-tight mb-1.5">Czat bez Cenzury</h1>
-          <p style={{color:'rgba(255,255,255,0.55)'}} className="text-sm leading-relaxed">
-            Odpowiedź na <strong style={{color:'rgba(167,139,250,0.95)'}}>absolutnie każde</strong> pytanie.<br />
-            Bez tematów tabu, bez ograniczeń, bez owijania w bawełnę.
+          <h1 className="text-3xl tracking-tight mb-2" style={{ fontWeight: 600 }}>
+            <span style={{ color: 'rgba(255,255,255,0.95)' }}>Bez</span>{' '}
+            <span style={{
+              background: 'linear-gradient(135deg,#a78bfa,#60a5fa)',
+              WebkitBackgroundClip: 'text', backgroundClip: 'text', WebkitTextFillColor: 'transparent',
+            }}>Filtra</span>
+          </h1>
+          <p style={{ color: 'rgba(255,255,255,0.5)' }} className="text-sm">
+            Odpowiedź na każde pytanie
           </p>
-          <p style={{color:'rgba(255,255,255,0.3)'}} className="text-xs mt-4">Wprowadź hasło dostępu</p>
+          <p
+            className="mt-5"
+            style={{ fontSize: 10, letterSpacing: '0.22em', color: 'rgba(255,255,255,0.28)', textTransform: 'uppercase' }}
+          >
+            bez cenzury · bez tematów tabu
+          </p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
