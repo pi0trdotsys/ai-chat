@@ -20,8 +20,8 @@ function modelOptions(model: string): Record<string, unknown> {
   const base = { temperature: 0.7, repeat_penalty: 1.1, num_ctx: 2048 }
   // Qwen 14B: mniejszy kontekst = więcej VRAM wolnego na warstwy GPU
   if (model.includes('qwen')) return { ...base, num_ctx: 2048 }
-  // Dolphin 8B: mieści się prawie w całości w VRAM, można dać większy kontekst
-  if (model.includes('dolphin')) return { ...base, num_ctx: 3072 }
+  // Dolphin 8B: 4.9GB nie mieści się w 4GB VRAM - mały kontekst = więcej GPU layers
+  if (model.includes('dolphin')) return { ...base, num_ctx: 1536 }
   return base
 }
 
