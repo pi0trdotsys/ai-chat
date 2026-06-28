@@ -15,8 +15,13 @@ import {
   deriveTitle,
   type Conversation,
 } from '@/lib/conversations'
+import { describeModel } from '@/lib/models'
 
-const LOCKED_MODEL = 'huihui_ai/qwen2.5-abliterate:14b'
+const ALLOWED_MODELS = [
+  'huihui_ai/qwen2.5-abliterate:14b',
+  'dolphin-pl:latest',
+]
+const DEFAULT_MODEL = ALLOWED_MODELS[0]
 
 const formatTime = (ms: number) => {
   const total = Math.floor(ms / 1000)
@@ -63,12 +68,24 @@ export function ChatWindow({ onLogout }: { onLogout: () => void }) {
   const [activeId, setActiveId] = useState<string>(boot.activeId)
   const initialMessages = boot.conversations.find(c => c.id === boot.activeId)!.messages
 
+  const [selectedModel, setSelectedModel] = useState(() => {
+    const saved = localStorage.getItem('ai-chat-model')
+    return saved && ALLOWED_MODELS.includes(saved) ? saved : DEFAULT_MODEL
+  })
+
   const activeConv = conversations.find(c => c.id === activeId)
   const {
     messages, setMessages, isStreaming, error, sendMessage, regenerate,
     editMessage, stop, clearMessages, elapsedMs, estimateMs,
     sessionTokens, sessionEnergyKWh, sessionWaterL,
-  } = useChat(initialMessages, LOCKED_MODEL, activeConv?.systemPrompt)
+  } = useChat(initialMessages, selectedModel, activeConv?.systemPrompt)
+
+  const handleSelectModel = (model: string) => {
+    if (ALLOWED_MODELS.includes(model)) {
+      setSelectedModel(model)
+      localStorage.setItem('ai-chat-model', model)
+    }
+  }
 
   const health = useHealth()
   useCompletionNotify(isStreaming)
@@ -315,7 +332,7 @@ export function ChatWindow({ onLogout }: { onLogout: () => void }) {
               transition={{ duration: 1.2, repeat: health.status === 'checking' ? Infinity : 0 }}
               style={{display:'inline-block',width:7,height:7,borderRadius:'50%',background:statusColor,boxShadow:`0 0 6px ${statusColor}`}}
             />
-            <span style={{fontWeight:500,whiteSpace:'nowrap'}}>🧠 Qwen 14B</span>
+            <span style={{fontWeight:500,whiteSpace:'nowrap'}}>{describeModel(selectedModel).emoji} {describeModel(selectedModel).label}</span>
             <span className="hidden sm:inline" style={{fontSize:9,letterSpacing:'0.12em',color:'rgba(255,255,255,0.35)',textTransform:'uppercase'}}>bez filtra</span>
           </div>
 
@@ -360,12 +377,12 @@ export function ChatWindow({ onLogout }: { onLogout: () => void }) {
             <CommandPalette
               onClose={() => setPaletteOpen(false)}
               conversations={conversations}
-              models={[]}
-              selectedModel={LOCKED_MODEL}
-              defaultModel={LOCKED_MODEL}
+              models={ALLOWED_MODELS.map(name => ({ name, sizeMB: 0 }))}
+              selectedModel={selectedModel}
+              defaultModel={DEFAULT_MODEL}
               onNewChat={handleNew}
               onSelectConversation={handleSelect}
-              onSelectModel={() => {}}
+              onSelectModel={handleSelectModel}
               onOpenPersona={() => setShowPersona(true)}
             />
           )}

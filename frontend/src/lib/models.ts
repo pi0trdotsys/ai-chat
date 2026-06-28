@@ -16,11 +16,21 @@ interface ModelRule {
 
 const RULES: ModelRule[] = [
   {
+    match: 'dolphin-pl',
+    meta: {
+      label: 'Dolphin PL (8B)',
+      desc: 'Szybki, bez cenzury, zoptymalizowany pod polskie odpowiedzi. Bez cyrylicy, bez halucynacji.',
+      tags: ['bez cenzury', 'po polsku', 'szybki'],
+      greeting: 'Cześć! Dolphin PL - szybki, bez hamulców i zawsze po polsku. Pytaj o cokolwiek.',
+      emoji: '🐬',
+    },
+  },
+  {
     match: 'huihui_ai/dolphin3-abliterated',
     meta: {
       label: 'Dolphin 3 Abliterated (8B)',
       desc: 'Najswobodniejszy z dostępnych. Odpowie dosłownie na wszystko, dobrze po polsku.',
-      tags: ['bez cenzury', 'po polsku', 'polecany'],
+      tags: ['bez cenzury', 'po polsku'],
       greeting: 'Cześć! Jestem Dolphin 3 bez żadnych hamulców. Pytaj o naprawdę cokolwiek - nie odmawiam.',
       emoji: '🐬',
     },
