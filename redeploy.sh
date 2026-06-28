@@ -7,7 +7,7 @@ set -euo pipefail
 cd "$(dirname "$0")"
 
 # ── konfiguracja projektu ────────────────────────
-DOMAIN="bezfiltra.ai" # <--- Zmień tutaj na swoją nową domenę po zakupie!
+DOMAIN="bezfiltra.beer"
 SVC=(ollama backend frontend)
 
 # ── synchronizacja kodu ──────────────────────────

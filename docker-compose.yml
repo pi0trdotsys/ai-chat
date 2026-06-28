@@ -10,10 +10,13 @@ services:
       - OLLAMA_KEEP_ALIVE=-1          # trzymaj model w RAM, bez przeładowań między pytaniami
       - OLLAMA_NUM_PARALLEL=1         # cały (wolny) CPU na jedno zapytanie naraz
     restart: unless-stopped
-    # GPU support (odkomentuj jeśli używasz ROCm na Vega 11)
-    # devices:
-    #   - /dev/kfd
-    #   - /dev/dri
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
 
   backend:
     build: ./backend
