@@ -26,7 +26,7 @@ export function useHealth(intervalMs = 15000) {
         const data = (await res.json()) as Health
         if (!cancelled) setHealth(data)
       } catch {
-        if (!cancelled) setHealth({ status: 'degraded', ollama: 'down', model: INITIAL.model, modelLoaded: false })
+        if (!cancelled) setHealth({ status: 'degraded', ollama: 'down', model: INITIAL.model, modelLoaded: false, modelLoading: false, gpuPercent: null, cpuPercent: null, vramMB: null, vramTotalMB: null })
       }
     }
 
