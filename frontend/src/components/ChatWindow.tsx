@@ -81,10 +81,8 @@ export function ChatWindow({ onLogout }: { onLogout: () => void }) {
   } = useChat(initialMessages, selectedModel, activeConv?.systemPrompt)
 
   const handleSelectModel = (model: string) => {
-    if (ALLOWED_MODELS.includes(model)) {
-      setSelectedModel(model)
-      localStorage.setItem('ai-chat-model', model)
-    }
+    setSelectedModel(model)
+    localStorage.setItem('ai-chat-model', model)
   }
 
   const health = useHealth()
