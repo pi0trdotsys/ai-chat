@@ -39,19 +39,27 @@ const plTokens = (n: number) => {
   return d >= 2 && d <= 4 && !(h >= 12 && h <= 14) ? 'tokeny' : 'tokenów'
 }
 
-// Komunikaty statusu (eskalują z czasem, jak u Claude'a, ale po polsku)
+// Komunikaty statusu - eskalują z czasem jak u Claude'a
 const THINKING_STEPS: { t: number; msg: string }[] = [
-  { t: 6, msg: 'Zbieram myśli…' },
-  { t: 18, msg: 'Analizuję pytanie…' },
-  { t: 45, msg: 'Składam odpowiedź…' },
-  { t: 90, msg: 'Wciąż myślę, to złożony temat…' },
-  { t: 180, msg: 'Już prawie gotowe…' },
+  { t: 4,   msg: '⚡ Przetwarzam pytanie…' },
+  { t: 10,  msg: '🧠 Analizuję temat…' },
+  { t: 22,  msg: '🔍 Szukam najlepszej odpowiedzi…' },
+  { t: 45,  msg: '⚙️ Składam myśli w całość…' },
+  { t: 80,  msg: '🤔 Zagłębiam się w szczegóły…' },
+  { t: 130, msg: '📝 Finalizuję odpowiedź…' },
+  { t: 200, msg: '🏁 Już prawie gotowe…' },
+]
+const WRITING_STEPS: { t: number; msg: string }[] = [
+  { t: 5,   msg: '✍️ Piszę odpowiedź…' },
+  { t: 20,  msg: '📖 Rozwijam myśl…' },
+  { t: 50,  msg: '🎯 Dobieram słowa…' },
+  { t: 100, msg: '🔖 Kończę odpowiedź…' },
 ]
 const thinkingStatus = (elapsedMs: number, writing: boolean) => {
-  if (writing) return 'Piszę odpowiedź…'
   const s = elapsedMs / 1000
-  for (const step of THINKING_STEPS) if (s < step.t) return step.msg
-  return 'Dopinam ostatnie szczegóły…'
+  const steps = writing ? WRITING_STEPS : THINKING_STEPS
+  for (const step of steps) if (s < step.t) return step.msg
+  return writing ? '✅ Zaraz skończę…' : '🌀 Głęboka analiza w toku…'
 }
 
 const EXAMPLE_PROMPTS = [
@@ -393,6 +401,26 @@ export function ChatWindow({ onLogout }: { onLogout: () => void }) {
                 <span>🔋 {(sessionEnergyKWh*1000).toFixed(1)} Wh</span>
                 <span>💧 {(sessionWaterL*1000).toFixed(0)} ml</span>
               </span>
+            )}
+            {health.gpuPercent !== null && (
+              <span
+                className="hidden md:flex items-center gap-1.5 text-xs rounded-full px-2.5 py-1"
+                style={{background:'rgba(96,165,250,0.08)',border:'0.5px solid rgba(96,165,250,0.2)',fontFamily:'ui-monospace,monospace'}}
+                title={`GPU: ${health.vramMB} MB · CPU: ${health.cpuPercent}%`}
+              >
+                <span style={{color:'rgba(96,165,250,0.9)',fontWeight:600}}>GPU {health.gpuPercent}%</span>
+                <span style={{color:'rgba(255,255,255,0.2)'}}>·</span>
+                <span style={{color:'rgba(255,255,255,0.4)'}}>CPU {health.cpuPercent}%</span>
+              </span>
+            )}
+            {health.modelLoading && (
+              <motion.span
+                animate={{opacity:[0.5,1,0.5]}} transition={{duration:1.4,repeat:Infinity}}
+                className="hidden md:flex items-center gap-1.5 text-xs rounded-full px-2.5 py-1"
+                style={{background:'rgba(251,191,36,0.08)',border:'0.5px solid rgba(251,191,36,0.25)',color:'rgba(251,191,36,0.8)'}}
+              >
+                ⏳ Ładowanie modelu…
+              </motion.span>
             )}
             <button
               onClick={() => setShowPersona(true)}

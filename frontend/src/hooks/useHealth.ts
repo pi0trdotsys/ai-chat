@@ -5,9 +5,14 @@ export interface Health {
   ollama: 'up' | 'down' | 'unknown'
   model: string
   modelLoaded: boolean
+  modelLoading: boolean
+  gpuPercent: number | null
+  cpuPercent: number | null
+  vramMB: number | null
+  vramTotalMB: number | null
 }
 
-const INITIAL: Health = { status: 'checking', ollama: 'unknown', model: '…', modelLoaded: false }
+const INITIAL: Health = { status: 'checking', ollama: 'unknown', model: '…', modelLoaded: false, modelLoading: false, gpuPercent: null, cpuPercent: null, vramMB: null, vramTotalMB: null }
 
 export function useHealth(intervalMs = 15000) {
   const [health, setHealth] = useState<Health>(INITIAL)

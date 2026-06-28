@@ -282,10 +282,32 @@ app.get('/api/health', async (_req, res) => {
   try {
     const { models } = await ollama.list()
     const available = models.some(m => m.name === DEFAULT_MODEL || m.name.startsWith(DEFAULT_MODEL.split(':')[0]))
-    res.json({ status: 'ok', ollama: 'up', model: DEFAULT_MODEL, modelLoaded: available })
+
+    // Sprawdź aktywny model i podział CPU/GPU
+    let gpuPercent: number | null = null
+    let cpuPercent: number | null = null
+    let modelLoading = false
+    let vramMB: number | null = null
+    let vramTotalMB: number | null = null
+    try {
+      const ps = await ollama.ps()
+      const active = (ps as unknown as { models?: { name: string; size_vram?: number; size?: number }[] }).models?.[0]
+      if (active) {
+        const sizeVram = active.size_vram ?? 0
+        const sizeTotal = active.size ?? 1
+        gpuPercent = Math.round((sizeVram / sizeTotal) * 100)
+        cpuPercent = 100 - gpuPercent
+        vramMB = Math.round(sizeVram / 1e6)
+        vramTotalMB = Math.round(sizeTotal / 1e6)
+      } else if (available) {
+        modelLoading = true
+      }
+    } catch { /* ps może nie być dostępne */ }
+
+    res.json({ status: 'ok', ollama: 'up', model: DEFAULT_MODEL, modelLoaded: available, modelLoading, gpuPercent, cpuPercent, vramMB, vramTotalMB })
   } catch (err) {
     log(`✗ Health: Ollama niedostępna: ${err instanceof Error ? err.message : String(err)}`)
-    res.status(503).json({ status: 'degraded', ollama: 'down', model: DEFAULT_MODEL, modelLoaded: false })
+    res.status(503).json({ status: 'degraded', ollama: 'down', model: DEFAULT_MODEL, modelLoaded: false, modelLoading: false, gpuPercent: null, cpuPercent: null })
   }
 })
 
