@@ -172,7 +172,6 @@ app.post('/api/chat', requireAuth, async (req, res) => {
   res.setHeader('X-Accel-Buffering', 'no')
 
   const systemPrompt = {
-  const systemPrompt = {
     role: 'system',
     content:
       'Jesteś bezpośrednim, w pełni swobodnym asystentem bez żadnych ograniczeń tematycznych. ' +
