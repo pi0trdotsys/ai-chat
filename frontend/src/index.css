@@ -1,5 +1,14 @@
 @import "tailwindcss";
 
+/* ── Dotyk: akcje chowane pod :hover nie działają na telefonie ──
+   Na urządzeniach bez kursora pokazujemy je na stałe (przygaszone). */
+@media (hover: none) {
+  .hover-actions { opacity: 0.7 !important; }
+}
+
+/* Bezpieczny margines pod notch/pasek dolny (iOS) */
+.safe-bottom { padding-bottom: max(1rem, env(safe-area-inset-bottom)); }
+
 /* Renderowanie Markdown w wiadomościach asystenta */
 .markdown {
   font-size: 0.92rem;

@@ -15,7 +15,6 @@ interface SidebarProps {
 }
 
 export function Sidebar({ isOpen, onClose, conversations, activeId, onSelect, onNew, onDelete, onRename, onLogout }: SidebarProps) {
-  const [hovered, setHovered] = useState<string | null>(null)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [draft, setDraft] = useState('')
 
@@ -101,10 +100,8 @@ export function Sidebar({ isOpen, onClose, conversations, activeId, onSelect, on
                 return (
                   <div
                     key={c.id}
-                    onMouseEnter={() => setHovered(c.id)}
-                    onMouseLeave={() => setHovered(h => (h === c.id ? null : h))}
                     onClick={() => { if (editingId !== c.id) onSelect(c.id) }}
-                    className="group w-full flex items-center gap-1 px-3 py-2 rounded-lg transition-colors cursor-pointer"
+                    className="group w-full flex items-center gap-1 px-3 py-2.5 rounded-lg transition-colors cursor-pointer"
                     style={{
                       background: active ? 'rgba(167,139,250,0.15)' : 'transparent',
                       border: active ? '0.5px solid rgba(167,139,250,0.25)' : '0.5px solid transparent',
@@ -129,8 +126,8 @@ export function Sidebar({ isOpen, onClose, conversations, activeId, onSelect, on
                         <p className="text-xs truncate" style={{color:'rgba(255,255,255,0.75)'}}>{c.title}</p>
                       )}
                     </div>
-                    {hovered === c.id && editingId !== c.id && (
-                      <div className="flex-shrink-0 flex items-center gap-0.5">
+                    {editingId !== c.id && (
+                      <div className="hover-actions flex-shrink-0 flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
                         <button
                           type="button"
                           onClick={e => { e.stopPropagation(); setEditingId(c.id); setDraft(c.title) }}

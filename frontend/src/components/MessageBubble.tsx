@@ -42,9 +42,7 @@ export function MessageBubble({ message, isStreaming, isLast, onRegenerate, onEd
       await navigator.clipboard.writeText(message.content)
       setCopied(true)
       setTimeout(() => setCopied(false), 1500)
-    } catch {
-      // brak schowka (nie-HTTPS) - ignorujemy
-    }
+    } catch { /* brak schowka */ }
   }
 
   const startEdit = () => { setDraft(message.content); setEditing(true) }
@@ -61,19 +59,23 @@ export function MessageBubble({ message, isStreaming, isLast, onRegenerate, onEd
       transition={{ duration: 0.2, ease: 'easeOut' }}
       className={`group flex gap-2 items-end ${isUser ? 'flex-row-reverse' : 'flex-row'}`}
     >
+      {/* Avatar */}
       <div
-        className="flex-shrink-0 flex items-center justify-center rounded-full text-xs font-medium"
+        className="flex-shrink-0 flex items-center justify-center rounded-full text-base"
         style={{
           width: 28, height: 28,
-          background: isUser ? 'rgba(255,255,255,0.1)' : 'linear-gradient(135deg,rgba(167,139,250,0.3),rgba(96,165,250,0.3))',
-          border: isUser ? '0.5px solid rgba(255,255,255,0.15)' : '0.5px solid rgba(167,139,250,0.3)',
-          color: isUser ? 'rgba(255,255,255,0.7)' : 'rgba(167,139,250,0.9)',
+          background: isUser
+            ? 'rgba(255,255,255,0.1)'
+            : 'linear-gradient(135deg,rgba(167,139,250,0.3),rgba(96,165,250,0.3))',
+          border: isUser
+            ? '0.5px solid rgba(255,255,255,0.15)'
+            : '0.5px solid rgba(167,139,250,0.3)',
         }}
       >
         {isUser ? '👤' : '🐬'}
       </div>
 
-      <div className={`flex flex-col gap-1 max-w-[78%] ${isUser ? 'items-end' : 'items-start'}`}>
+      <div className={`flex flex-col gap-1 max-w-[85%] sm:max-w-[78%] ${isUser ? 'items-end' : 'items-start'}`}>
         <div
           className="px-3 py-2 text-sm leading-relaxed w-full"
           style={{
@@ -113,12 +115,12 @@ export function MessageBubble({ message, isStreaming, isLast, onRegenerate, onEd
             </div>
           ) : isStreaming && !message.content ? (
             <span className="flex gap-1 items-center py-0.5">
-              {[0, 1, 2].map(i => (
+              {[0,1,2].map(i => (
                 <motion.span
                   key={i}
-                  animate={{ opacity: [0.3, 1, 0.3], scale: [0.8, 1, 0.8] }}
+                  animate={{ opacity: [0.3,1,0.3], scale: [0.8,1,0.8] }}
                   transition={{ duration: 1.2, repeat: Infinity, delay: i * 0.2 }}
-                  style={{ display: 'inline-block', width: 6, height: 6, borderRadius: '50%', background: 'rgba(167,139,250,0.7)' }}
+                  style={{ display:'inline-block', width:6, height:6, borderRadius:'50%', background:'rgba(167,139,250,0.7)' }}
                 />
               ))}
             </span>
@@ -129,23 +131,39 @@ export function MessageBubble({ message, isStreaming, isLast, onRegenerate, onEd
           ) : (
             <>
               <Markdown content={message.content} />
+
+              {/* Statystyki - pokazują się zarówno po normalnym zakończeniu jak i po przerwaniu */}
               {message.stats && (() => {
                 const s = message.stats
-                const parts = [
-                  `${s.promptTok} → ${s.genTok} tok`,
-                  `${s.tps.toString().replace('.', ',')} tok/s`,
+                const interrupted = (s as any).interrupted === true
+                const parts: { icon: string; value: string; title: string }[] = [
+                  { icon: '📊', value: `${s.promptTok} → ${s.genTok} tok`, title: 'tokeny wejściowe → wygenerowane' },
+                  { icon: '⚡', value: `${s.tps.toString().replace('.', ',')} tok/s`, title: 'prędkość generowania' },
                 ]
-                if (s.responseTimeMs != null) parts.push(`${(s.responseTimeMs / 1000).toFixed(0)} s`)
-                if (s.energyKWh != null) parts.push(`${(s.energyKWh * 1000).toFixed(2)} Wh`)
-                if (s.waterL != null) parts.push(`${(s.waterL * 1000).toFixed(1)} ml`)
+                if (s.responseTimeMs != null)
+                  parts.push({ icon: '⏱️', value: `${(s.responseTimeMs / 1000).toFixed(1)} s`, title: 'czas odpowiedzi' })
+                if (s.energyKWh != null)
+                  parts.push({ icon: '🔋', value: `${(s.energyKWh * 1000).toFixed(2)} Wh`, title: 'zużycie energii' })
+                if (s.waterL != null)
+                  parts.push({ icon: '💧', value: `${(s.waterL * 1000).toFixed(1)} ml`, title: 'zużycie wody (chłodzenie)' })
                 return (
-                  <div className="mt-2 pt-1.5" style={{ borderTop: '0.5px solid rgba(255,255,255,0.06)' }}>
-                    <span
-                      style={{ fontSize: 10, color: 'rgba(255,255,255,0.32)', letterSpacing: '0.01em' }}
-                      title="tokeny wejściowe → wygenerowane · tempo · czas · energia · woda (orientacyjnie)"
-                    >
-                      {parts.join('   ·   ')}
-                    </span>
+                  <div className="mt-2 pt-1.5 flex flex-wrap gap-x-3 gap-y-1 items-center" style={{ borderTop: '0.5px solid rgba(255,255,255,0.06)' }}>
+                    {interrupted && (
+                      <span style={{ fontSize: 10, color: 'rgba(248,113,113,0.8)', letterSpacing: '0.04em' }}>
+                        ⏹️ przerwano
+                      </span>
+                    )}
+                    {parts.map(p => (
+                      <span
+                        key={p.icon}
+                        title={p.title}
+                        className="flex items-center gap-1"
+                        style={{ fontSize: 10, color: 'rgba(255,255,255,0.32)', letterSpacing: '0.01em' }}
+                      >
+                        <span>{p.icon}</span>
+                        <span>{p.value}</span>
+                      </span>
+                    ))}
                   </div>
                 )
               })()}
@@ -153,10 +171,10 @@ export function MessageBubble({ message, isStreaming, isLast, onRegenerate, onEd
           )}
         </div>
 
-        {/* Pasek akcji - pojawia się po najechaniu, nie podczas edycji/streamingu */}
+        {/* Pasek akcji */}
         {!editing && !isStreaming && (
           <div
-            className={`flex items-center gap-1 px-1 opacity-0 group-hover:opacity-100 transition-opacity ${isUser ? 'flex-row-reverse' : 'flex-row'}`}
+            className={`hover-actions flex items-center gap-1 px-1 opacity-0 group-hover:opacity-100 transition-opacity ${isUser ? 'flex-row-reverse' : 'flex-row'}`}
           >
             <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.25)' }}>{fmtTime(message.createdAt)}</span>
             {!isUser && message.content && (
