@@ -64,13 +64,31 @@ step() {
   fi
 }
 
+# ── tryb konserwacji (markowa strona 503 na czas przebudowy) ──
+MAINT_NAME="bf-maintenance"
+maint_up() {
+  docker compose stop frontend 2>/dev/null || true
+  docker rm -f "$MAINT_NAME" 2>/dev/null || true
+  docker run -d --name "$MAINT_NAME" -p 5173:80 \
+    -v "$(pwd)/maintenance/index.html:/usr/share/nginx/html/index.html:ro" \
+    -v "$(pwd)/maintenance/nginx.conf:/etc/nginx/conf.d/default.conf:ro" \
+    nginx:alpine
+}
+maint_down() { docker rm -f "$MAINT_NAME" 2>/dev/null || true; }
+
+# Awaryjne przywrócenie: gdyby coś padło w trakcie, zdejmij stronę konserwacji
+# i postaw stack ze starych (działających) obrazów.
+trap 'maint_down; docker compose up -d >/dev/null 2>&1 || true' EXIT
+
 clear 2>/dev/null || true
 echo
 printf "  ${B}${PU}◆ BEZ FILTRA${R}  ${GY}// 14B Engine · bez cenzury${R}\n"
 rule
 
+step "tryb konserwacji ON (503)"    maint_up
 step "wygaszanie sesji + teardown"  docker compose down --remove-orphans
 step "rekompilacja obrazów"         docker compose build
+step "tryb konserwacji OFF"         maint_down
 step "rozruch czystego stacku"      docker compose up -d
 # czekamy aż backend zamelduje połączenie z modelem Qwen 14B
 step "zestawianie łącza z modelem"  bash -c 'for i in $(seq 1 40); do curl -sf localhost:3001/api/health >/dev/null && exit 0; sleep 1; done; exit 1'

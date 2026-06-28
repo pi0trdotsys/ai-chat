@@ -6,6 +6,12 @@
       "runtimeExecutable": "npm",
       "runtimeArgs": ["--prefix", "frontend", "run", "dev", "--", "--port", "5173", "--strictPort"],
       "port": 5173
+    },
+    {
+      "name": "maintenance",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": ["-m", "http.server", "5191", "--directory", "maintenance"],
+      "port": 5191
     }
   ]
 }
